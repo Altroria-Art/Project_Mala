@@ -8,7 +8,7 @@ import HelloWorld from './components/HelloWorld.vue'
     <div class="w-full max-w-md bg-white shadow-xl min-h-screen flex flex-col">
       
       <header class="p-4 flex justify-between items-center border-b">
-        <h1 class="text-xl font-bold text-orange-600">Mala Verse</h1>
+        <h1 class="text-xl font-bold text-orange-600">Mala Verse1</h1>
         <div class="relative">
           <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full px-1.5">0</span>
           🛒
