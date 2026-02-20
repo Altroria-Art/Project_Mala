@@ -1,44 +1,18 @@
 <script setup>
-import { ref } from 'vue'
-
-const title = ref('ยินดีต้อนรับสู่ Foodie Express')
-const count = ref(0)
-
-const addOrder = () => {
-  count.value++
-}
+import NavbarAdmin from '../../components/admin/navbar_admin.vue'
 </script>
 
 <template>
-  <div class="card">
-    <h1>{{ title }}</h1>
-    <p>เลือกสั่งอาหารที่คุณชอบได้ที่นี่</p>
+  <div class="min-h-screen bg-gray-50">
+    <NavbarAdmin />
     
-    <div class="order-box">
-      <p>จำนวนรายการในตะกร้า: <strong>{{ count }}</strong></p>
-      <button @click="addOrder">เพิ่มอาหารใส่ตะกร้า</button>
-      <button @click="count = 0" class="btn-reset">ล้างตะกร้า</button>
-    </div>
+    <main class="p-6 w-full h-full">
+      <h1 class="text-2xl font-bold text-gray-800">ระบบหลังบ้าน - จัดการออเดอร์</h1>
+      <p class="text-gray-600 mt-2">รายการออเดอร์ที่ต้องจัดการ</p>
+    </main>
   </div>
 </template>
 
 <style scoped>
-.card {
-  padding: 20px;
-  border-radius: 8px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-button {
-  background-color: #42b883;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-right: 10px;
-}
-.btn-reset {
-  background-color: #ff6b6b;
-}
+/* ลบ Style เดิมทิ้งได้เลย เพราะเราจะเน้นใช้ Tailwind CSS ตามโครงสร้างของคุณ */
 </style>
