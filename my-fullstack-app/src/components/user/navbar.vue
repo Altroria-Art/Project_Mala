@@ -1,45 +1,40 @@
 <template>
-  <!-- กรอบ Navbar หลัก -->
-  <nav class="w-full h-[65px] bg-white px-4 flex items-center justify-between shadow-[0_2px_4px_rgba(0,0,0,0.05)] sticky top-0 z-50">
+  <!-- ใช้ px-5 เพื่อให้มีระยะขอบซ้าย-ขวาที่พอดีกับหน้าจอมือถือ -->
+  <nav class="w-full h-[65px] bg-white px-5 flex items-center justify-between shadow-[0_2px_4px_rgba(0,0,0,0.05)] sticky top-0 z-50">
     
     <!-- ฝั่งซ้าย: โลโก้ และ ชื่อร้าน -->
-    <router-link to="/" class="flex items-center gap-[10px]">
-      <!-- โลโก้ -->
-      <div class="w-[50px] h-[50px] flex items-center justify-center">
-        <img src="../../assets/logo.png" alt="Mala Verse Logo" class="w-full h-full object-contain" />
+    <router-link to="/" class="flex items-center gap-3">
+      <div class="w-[42px] h-[42px] flex items-center justify-center rounded-full bg-white shadow-sm overflow-hidden border border-gray-100 shrink-0">
+        <img src="../../assets/logo.png" alt="Mala Verse Logo" class="w-full h-full object-contain scale-110" />
       </div>
-
-      <!-- ชื่อร้าน -->
-      <span class="font-['Permanent_Marker',_cursive] text-[24px] font-bold text-black tracking-[0.03em] mt-[2px]">
-        Mala Verse
-      </span>
+      
+      <div class="flex flex-col justify-center">
+        <span class="text-[17px] font-bold text-[#0f172a] leading-none mb-1">Mala Verse</span>
+        <span class="text-[9px] text-[#94a3b8] font-bold tracking-wider leading-none uppercase">Premium Hotpot</span>
+      </div>
     </router-link>
 
-    <!-- ฝั่งขวา: กลุ่มไอคอน (บิล และ ตะกร้า) -->
-    <div class="flex items-center gap-5 mr-1 mt-1">
+    <!-- ฝั่งขวา: กลุ่มไอคอน -->
+    <!-- ปรับระยะห่างระหว่างปุ่มให้กว้างขึ้นด้วย gap-5 เพื่อให้ใช้นิ้วกดบนมือถือได้ง่าย ไม่พลาดไปโดนอีกปุ่ม -->
+    <div class="flex items-center gap-5 mt-1">
       
-      <!-- 1. ไอคอนบิล/รายการสั่งซื้อ (เปลี่ยนเป็นปุ่มสำหรับเปิด Pop-up) -->
-      <button @click="openOrderPopup" class="relative flex items-center justify-center cursor-pointer bg-transparent border-none p-0">
-        <!-- ไอคอนใบเสร็จ (Receipt) สีดำ -->
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px] fill-black">
-          <path fill-rule="evenodd" d="M7 2a2 2 0 0 0-2 2v17a1 1 0 0 0 1.555.832L8 20.877l1.445.955a1 1 0 0 0 1.11 0L12 20.877l1.445.955a1 1 0 0 0 1.11 0L16 20.877l1.445.955A1 1 0 0 0 19 21V4a2 2 0 0 0-2-2H7zm2 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm3-1a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3zm-3 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm3-1a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3zm-3 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm3-1a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3z" clip-rule="evenodd"/>
+      <!-- ปุ่มไอคอนบิล: เพิ่ม p-1.5 เพื่อให้ปุ่มมีพื้นที่กว้างขึ้น ตัวเลขจะได้ไม่ล้นขอบ -->
+      <button @click="clickBill" class="relative p-1.5 cursor-pointer bg-transparent border-none transition-transform active:scale-95">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-7 h-7 text-[#334155]">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25Z" />
         </svg>
-        
-        <!-- ตัวเลขแจ้งเตือนบิล -->
-        <span class="absolute -top-[6px] -right-[8px] bg-[#b00000] text-white text-[10px] font-bold w-[16px] h-[16px] rounded-full flex items-center justify-center leading-none">
+        <!-- ย้ายตำแหน่งตัวเลขมาเป็น top-0 right-0 และจัดให้อยู่ในขอบเขตปุ่ม -->
+        <span class="absolute top-0 right-0 bg-[#e11d48] text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center leading-none border-2 border-white shadow-sm translate-x-0.5 -translate-y-0.5">
           {{ orderCount }}
         </span>
       </button>
 
-      <!-- 2. ไอคอนตะกร้าสินค้า (เปลี่ยนเป็นปุ่มสำหรับเปิด Pop-up) -->
-      <button @click="openCartPopup" class="relative flex items-center justify-center cursor-pointer bg-transparent border-none p-0">
-        <!-- ไอคอนตะกร้าสินค้าแบบทึบ -->
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-[28px] h-[28px] fill-black">
-          <path fill-rule="evenodd" d="M8 8V6a4 4 0 1 1 8 0v2h4a1 1 0 0 1 1 1v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a1 1 0 0 1 1-1h4zm2-2v2h4V6a2 2 0 1 0-4 0z" clip-rule="evenodd" />
+      <!-- ปุ่มตะกร้า: เพิ่ม p-1.5 เช่นเดียวกัน -->
+      <button @click="$emit('open-cart')" class="relative p-1.5 cursor-pointer bg-transparent border-none transition-transform active:scale-95">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" class="w-7 h-7 text-[#334155]">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
         </svg>
-        
-        <!-- ตัวเลขแจ้งเตือนตะกร้า -->
-        <span class="absolute -top-[6px] -right-[8px] bg-[#b00000] text-white text-[10px] font-bold w-[16px] h-[16px] rounded-full flex items-center justify-center leading-none">
+        <span class="absolute top-0 right-0 bg-[#e11d48] text-white text-[10px] font-bold min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center leading-none border-2 border-white shadow-sm translate-x-0.5 -translate-y-0.5">
           {{ cartCount }}
         </span>
       </button>
@@ -51,39 +46,22 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 
-// 1. สร้างตัวแปรแบบ Reactive เพื่อเก็บตัวเลขแจ้งเตือน
+const emit = defineEmits(['open-bill', 'open-cart']);
 const orderCount = ref(0);
 const cartCount = ref(0);
 
-// 2. ฟังก์ชันสำหรับเปิด Pop-up (เตรียมไว้สำหรับเชื่อมต่อในอนาคต)
-const openOrderPopup = () => {
-  console.log('คลิกเปิด Pop-up บิล/รายการสั่งซื้อ');
-  // 📌 เพิ่มโค้ดสำหรับเปิด Pop-up บิลของคุณที่นี่
+const clickBill = () => {
+  emit('open-bill');
 };
 
-const openCartPopup = () => {
-  console.log('คลิกเปิด Pop-up ตะกร้าสินค้า');
-  // 📌 เพิ่มโค้ดสำหรับเปิด Pop-up ตะกร้าของคุณที่นี่
-};
-
-// 3. ฟังก์ชันสำหรับดึงข้อมูลจาก Database / API
 const fetchNavbarData = async () => {
   try {
-    // 📌 เมื่อคุณมี Backend/Database แล้ว สามารถเอาโค้ดดึงข้อมูลมาใส่ตรงนี้ได้เลย
     orderCount.value = 0;
     cartCount.value = 0;
   } catch (error) {
-    console.error('ดึงข้อมูล Navbar ล้มเหลว:', error);
+    console.error(error);
   }
 };
 
-// 4. สั่งให้ทำงานเมื่อ Navbar โหลดเสร็จ
-onMounted(() => {
-  fetchNavbarData();
-});
+onMounted(() => fetchNavbarData());
 </script>
-
-<style scoped>
-/* โหลดฟอนต์จาก Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');
-</style>
