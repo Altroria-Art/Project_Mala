@@ -5,6 +5,7 @@
     <!-- ฝั่งซ้าย: โลโก้ และ ชื่อร้าน -->
     <router-link to="/" class="flex items-center gap-3">
       <div class="w-[42px] h-[42px] flex items-center justify-center rounded-full bg-white shadow-sm overflow-hidden border border-gray-100 shrink-0">
+        <!-- ใส่ Path รูปภาพของคุณกลับเข้ามา -->
         <img src="../../assets/logo.png" alt="Mala Verse Logo" class="w-full h-full object-contain scale-110" />
       </div>
       
