@@ -5,15 +5,17 @@ import Navbar from '../../components/user/navbar.vue';
 import CookTypeSelector from '../../components/user/CookTypeSelector.vue';
 import ProductGrid from '../../components/user/ProductGrid.vue';
 import CartModal from '../../components/user/CartModal.vue'; 
-import BillModal from '../../components/user/BillModal.vue'; // <-- 1. Import BillModal เข้ามาที่นี่
+import BillModal from '../../components/user/BillModal.vue';
 
+// เรียกใช้งาน Store สำหรับจัดการตะกร้าและบิล
 const cartStore = useCartStore();
 
+// สถานะการเปิด/ปิดหน้าต่าง Modal
 const isCartOpen = ref(false); 
-const isBillOpen = ref(false); // <-- 2. สร้าง State ควบคุมการเปิด/ปิดหน้าบิล
-const cookType = ref('boil'); 
+const isBillOpen = ref(false);
+const cookType = ref('boil'); // ค่าเริ่มต้นหมวดการปรุง
 
-// ข้อมูลจำลอง (Mock Data)
+// ข้อมูลรายการอาหารจำลอง
 const allProducts = ref([
   { id: 1, name: 'หมูสามชั้นสไลซ์/3 ชิ้น', price: 10, category: 'meat', cookType: 'boil', image: 'https://images.unsplash.com/photo-1628268909376-e8c44bb3153f?w=200&h=200&fit=crop' },
   { id: 2, name: 'สันคอหมูสไลซ์/3 ชิ้น', price: 10, category: 'meat', cookType: 'boil', image: 'https://images.unsplash.com/photo-1606489379685-ce1fc80104f6?w=200&h=200&fit=crop' },
@@ -27,64 +29,75 @@ const allProducts = ref([
   { id: 6, name: 'เต้าหู้ชีส/3 ชิ้น', price: 10, category: 'other', cookType: 'both', image: 'https://images.unsplash.com/photo-1625937759419-4809e2e6c4ea?w=200&h=200&fit=crop' },
 ]);
 
+// กรองสินค้าที่จะแสดงตามหมวดการปรุง (ต้ม/ย่าง)
 const displayedProducts = computed(() => {
   return allProducts.value.filter(
     item => item.cookType === cookType.value || item.cookType === 'both'
   );
 });
 
-const handleAddToCart = (product) => {
-  cartStore.addToCart(product, cookType.value);
-};
-
-// ฟังก์ชันเปิด/ปิด Modal ตะกร้า
+// ฟังก์ชันจัดการเหตุการณ์ต่างๆ
+const handleAddToCart = (product) => cartStore.addToCart(product, cookType.value);
 const handleOpenCart = () => isCartOpen.value = true;
 const handleCloseCart = () => isCartOpen.value = false;
-
-// ฟังก์ชันเปิด/ปิด Modal บิล (ไอคอนซ้าย)
 const handleOpenBill = () => isBillOpen.value = true;
 const handleCloseBill = () => isBillOpen.value = false;
 </script>
 
 <template>
-  <div class="w-full max-w-md mx-auto bg-[#F4F4F5] min-h-[100dvh] relative shadow-2xl font-sans overflow-x-hidden flex flex-col">
+  <!-- พื้นหลังดำด้านนอกสุดเพื่อให้เห็นขอบเขตหน้าจอมือถือชัดเจน -->
+  <div class="min-h-screen bg-zinc-900 flex justify-center overflow-x-hidden">
     
-    <!-- Navbar เชื่อม props ทั้งตัวเลขตะกร้าและตัวเลขบิล -->
-    <!-- ดักจับ Event @open-bill ให้เรียกฟังก์ชันเปิดหน้าบิล -->
-    <Navbar 
-      :cartCount="cartStore.totalItems"
-      :orderCount="cartStore.orderCount"
-      @open-cart="handleOpenCart"
-      @open-bill="handleOpenBill"
-    />
-
-    <main class="px-5 pt-6 pb-24 w-full flex-1">
-      <CookTypeSelector v-model="cookType" />
-      <ProductGrid 
-        :products="displayedProducts" 
-        @add-to-cart="handleAddToCart" 
+    <!-- Mobile Container: จำกัดความกว้างที่ 480px และจัดให้อยู่ตรงกลาง -->
+    <div class="w-full max-w-[480px] bg-[#F4F4F5] min-h-screen relative shadow-2xl flex flex-col overflow-x-hidden border-x border-zinc-800/50">
+      
+      <!-- Navbar -->
+      <Navbar 
+        class="shrink-0"
+        :cartCount="cartStore.totalItems"
+        :orderCount="cartStore.orderCount"
+        @open-cart="handleOpenCart"
+        @open-bill="handleOpenBill"
       />
-    </main>
 
-    <!-- Modal ตะกร้า -->
-    <CartModal :isOpen="isCartOpen" @close="handleCloseCart" />
+      <!-- ส่วนเนื้อหาหลัก: ใส่ overflow-y-auto เพื่อให้เลื่อนได้แค่ในพื้นที่นี้ -->
+      <main class="flex-1 px-5 pt-6 pb-28 overflow-y-auto overflow-x-hidden scroll-smooth">
+        <CookTypeSelector v-model="cookType" />
+        <ProductGrid 
+          :products="displayedProducts" 
+          @add-to-cart="handleAddToCart" 
+        />
+      </main>
 
-    <!-- 3. วาง Component บิลที่เพิ่มเข้ามาใหม่ -->
-    <BillModal :isOpen="isBillOpen" @close="handleCloseBill" />
+      <!-- ส่วนจัดการหน้าต่างป๊อปอัพต่างๆ -->
+      <CartModal :isOpen="isCartOpen" @close="handleCloseCart" />
+      <BillModal :isOpen="isBillOpen" @close="handleCloseBill" />
 
+    </div>
   </div>
 </template>
 
 <style>
-/* ตั้งค่า Font รวมของหน้าแอป */
+/* ตั้งค่าฟอนต์และพื้นฐาน CSS */
 @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
 
 body {
   font-family: 'Kanit', sans-serif;
-  background-color: #333; 
   margin: 0;
   padding: 0;
+  background-color: #18181b; /* สีดำนอก Container */
+}
+
+/* ป้องกันการเลื่อนหน้าจอด้านข้างของมือถือ */
+html, body {
   overflow-x: hidden;
-  -webkit-overflow-scrolling: touch; 
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* ซ่อน Scrollbar สำหรับ Browser ส่วนใหญ่ */
+::-webkit-scrollbar {
+  display: none;
 }
 </style>
