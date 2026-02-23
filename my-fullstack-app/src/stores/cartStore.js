@@ -1,36 +1,71 @@
-// src/stores/cartStore.js
 import { defineStore } from 'pinia';
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
-    items: [], // เก็บรายการอาหารที่เลือก
+    items: [], // เก็บรายการอาหารในตะกร้า
+    bills: []  // <-- ต้องมีอันนี้ เพื่อเก็บประวัติบิล
   }),
   
   getters: {
-    // นับจำนวนชิ้นทั้งหมดในตะกร้า (สำหรับโชว์ตรงไอคอนตะกร้าสีแดง)
     totalItems: (state) => state.items.reduce((total, item) => total + item.quantity, 0),
-    
-    // คำนวณราคารวมทั้งหมด
     totalPrice: (state) => state.items.reduce((total, item) => total + (item.price * item.quantity), 0),
+    
+    // ไว้นับจำนวนบิลโชว์ที่ไอคอน
+    orderCount: (state) => state.bills.length,
+    // ราคารวมทุกบิล
+    grandTotalPrice: (state) => state.bills.reduce((total, bill) => total + bill.totalPrice, 0)
   },
   
   actions: {
-    addToCart(product) {
-      // เช็คว่ามีสินค้านี้ในตะกร้าหรือยัง
-      const existingItem = this.items.find(item => item.id === product.id);
-      
+    addToCart(product, addedAs) {
+      const existingItem = this.items.find(item => item.id === product.id && item.typeAddedAs === addedAs);
       if (existingItem) {
-        existingItem.quantity += 1; // ถ้ามีแล้วให้เพิ่มจำนวน
+        existingItem.quantity += 1;
       } else {
-        this.items.push({ ...product, quantity: 1 }); // ถ้ายังไม่มีให้เพิ่มเข้าไปใหม่
+        this.items.push({ ...product, quantity: 1, typeAddedAs: addedAs });
+      }
+    },
+
+    increaseQty(item) {
+      const existingItem = this.items.find(i => i.id === item.id && i.typeAddedAs === item.typeAddedAs);
+      if (existingItem) existingItem.quantity++;
+    },
+
+    decreaseQty(item) {
+      const existingItem = this.items.find(i => i.id === item.id && i.typeAddedAs === item.typeAddedAs);
+      if (existingItem) {
+        if (existingItem.quantity > 1) {
+          existingItem.quantity--;
+        } else {
+          const index = this.items.indexOf(existingItem);
+          if (index > -1) this.items.splice(index, 1);
+        }
       }
     },
     
-    // อนาคตสามารถเพิ่ม action สำหรับยืนยันคำสั่งซื้อ (ยิง API POST ไปที่ Backend) ตรงนี้ได้เลย
-    async checkout(tableNumber) {
-      // const response = await axios.post('/api/orders', { table: tableNumber, items: this.items });
-      console.log('ส่งออเดอร์ไปครัวโต๊ะ:', tableNumber, 'รายการ:', this.items);
-      this.items = []; // สั่งเสร็จเคลียร์ตะกร้า
+    // อัปเดตฟังก์ชันนี้ ให้รับค่าน้ำซุป/ความเผ็ด และสร้างบิล
+    async checkout(tableNumber, boilSoup, boilSpice, grillSpice) {
+      if (this.items.length === 0) return;
+
+      const orderedItems = JSON.parse(JSON.stringify(this.items));
+      const billTotal = this.totalPrice;
+
+      const hasBoil = orderedItems.some(i => i.typeAddedAs === 'boil');
+      const hasGrill = orderedItems.some(i => i.typeAddedAs === 'grill');
+
+      const newBill = {
+        id: this.bills.length + 1, 
+        items: orderedItems,
+        totalPrice: billTotal,
+        options: {
+          boil: hasBoil ? `${boilSoup} [${boilSpice}]` : null,
+          grill: hasGrill ? `[${grillSpice}]` : null
+        },
+        timestamp: new Date()
+      };
+
+      this.bills.push(newBill); // บันทึกบิล
+      this.items = []; // เคลียร์ตะกร้า
     }
   }
 });
