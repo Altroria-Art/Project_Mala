@@ -1,5 +1,1 @@
-/* ลบของเก่าทิ้งให้หมด แล้วใส่แค่บรรทัดนี้บรรทัดเดียวครับ */
 @import "tailwindcss";
-
-/* คุณสามารถเอา Font มาใส่ไว้ที่นี่ที่เดียวเลยก็ได้ครับ */
-@import url('https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap');

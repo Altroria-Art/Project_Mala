@@ -1,80 +1,5 @@
-<template>
-  <Teleport to="body">
-    <transition name="fade">
-      <!-- พื้นหลังสีดำโปร่งใส -->
-      <div 
-        v-if="isOpen" 
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100] flex justify-center items-center p-4"
-        @click.self="closeModal"
-      >
-        <!-- ตัวกล่อง Popup หลัก -->
-        <div class="bg-white w-full max-w-[360px] max-h-[85vh] rounded-[32px] flex flex-col shadow-2xl relative">
-          
-          <!-- ส่วนหัว (Header) -->
-          <div class="px-6 py-6 flex justify-between items-center z-10 shrink-0">
-            <!-- ป้ายบอกเบอร์โต๊ะ -->
-            <div class="bg-[#2D1B54] text-white px-5 py-2 rounded-xl text-sm font-medium tracking-wider shadow-sm">
-              โต๊ะ {{ tableNumber }}
-            </div>
-            
-            <!-- ราคาทั้งหมด -->
-            <div class="text-sm font-medium text-gray-800 flex items-center gap-2">
-              ราคาทั้งหมด <span class="font-bold text-[18px]">{{ grandTotal }}฿</span>
-            </div>
-          </div>
-
-          <!-- ส่วนรายการอาหาร (Body - Scroll ได้) -->
-          <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5">
-            
-            <!-- กรณีไม่มีข้อมูล -->
-            <div v-if="bills.length === 0" class="flex flex-col items-center justify-center py-10 text-gray-400">
-              <p>ยังไม่มีรายการสั่งอาหาร</p>
-            </div>
-
-            <!-- วนลูปแสดงการ์ดบิลแต่ละรอบ -->
-            <div 
-              v-for="bill in bills" 
-              :key="bill.id" 
-              class="bg-white rounded-[24px] p-5 shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-gray-100"
-            >
-              <!-- Card Header -->
-              <div class="flex justify-between items-center mb-5">
-                <span class="bg-[#f87171] text-white px-3 py-1.5 rounded-lg text-[12px] font-bold shadow-sm leading-none">
-                  บิลที่ {{ bill.billNumber }}
-                </span>
-                <span class="text-sm font-medium text-gray-800">
-                  ราคา <span class="font-bold text-base ml-1">{{ bill.totalPrice }}฿</span>
-                </span>
-              </div>
-
-              <!-- รายการอาหารในบิลนั้นๆ -->
-              <div class="space-y-3 mb-4">
-                <div v-for="item in bill.items" :key="item.id" class="flex justify-between text-[13px] font-medium text-gray-800">
-                  <span>{{ item.name }} <span class="font-normal">[{{ item.type }}]</span></span>
-                  <span class="text-gray-600">X{{ item.qty }}</span>
-                </div>
-              </div>
-
-              <!-- เส้นประแบ่งส่วน -->
-              <div class="border-t border-dashed border-gray-300 my-4"></div>
-
-              <!-- ตัวเลือกเพิ่มเติม (น้ำซุป / ระดับความเผ็ด) -->
-              <div class="text-[13px] text-gray-400 space-y-1.5 font-medium">
-                <p v-if="bill.options.soup">ต้ม: {{ bill.options.soup }}</p>
-                <p v-if="bill.options.grill">ย่าง: {{ bill.options.grill }}</p>
-              </div>
-            </div>
-
-          </div>
-          
-        </div>
-      </div>
-    </transition>
-  </Teleport>
-</template>
-
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { useCartStore } from '../../stores/cartStore';
 
 const props = defineProps({
   isOpen: {
@@ -84,80 +9,98 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
+const cartStore = useCartStore();
 
-const closeModal = () => {
-  emit('close');
+// ฟังก์ชันแปลงประเภทให้เป็นภาษาไทยแสดงผลสวยๆ
+const getTypeLabel = (type) => {
+  return type === 'boil' ? '[ต้ม]' : '[ย่าง]';
 };
-
-// ==========================================
-// 📌 ส่วนจัดการข้อมูล (เตรียมเชื่อมต่อ Database)
-// ==========================================
-
-const tableNumber = ref('01');
-const bills = ref([]);
-
-// คำนวณราคารวมของทุกบิลอัตโนมัติ
-const grandTotal = computed(() => {
-  return bills.value.reduce((sum, bill) => sum + bill.totalPrice, 0).toLocaleString();
-});
-
-// ฟังก์ชันจำลองการดึงข้อมูลจาก Database / API
-const fetchBillData = async () => {
-  try {
-    // โครงสร้าง Mock Data
-    const mockDataFromDB = [
-      {
-        id: 'b_001',
-        billNumber: 1,
-        totalPrice: 6666,
-        items: [
-          { id: 'i_01', name: 'หมูสามชั้นสไลซ์/3 ชิ้น', type: 'ต้ม', qty: 5 },
-          { id: 'i_02', name: 'ผ้าขี้ริ้ววัว/3ชิ้น', type: 'ต้ม', qty: 5 },
-          { id: 'i_03', name: 'เต้าหู้ไข่/3 ชิ้น', type: 'ต้ม', qty: 5 },
-          { id: 'i_04', name: 'ไส้วัว', type: 'ย่าง', qty: 5 },
-        ],
-        options: {
-          soup: 'หม่าล่า [เผ็ดน้อย]',
-          grill: '[เผ็ดกลาง]'
-        }
-      },
-      {
-        id: 'b_002',
-        billNumber: 2,
-        totalPrice: 3333,
-        items: [
-          { id: 'i_05', name: 'หมูสามชั้นสไลซ์/3 ชิ้น', type: 'ต้ม', qty: 5 },
-          { id: 'i_06', name: 'ผ้าขี้ริ้ววัว/3ชิ้น', type: 'ต้ม', qty: 5 },
-          { id: 'i_07', name: 'เต้าหู้ไข่/3 ชิ้น', type: 'ต้ม', qty: 5 },
-        ],
-        options: {
-          soup: 'หม่าล่า [เผ็ดน้อย]',
-          grill: ''
-        }
-      }
-    ];
-
-    bills.value = mockDataFromDB;
-  } catch (error) {
-    console.error('ไม่สามารถดึงข้อมูลบิลได้:', error);
-  }
-};
-
-// ดึงข้อมูลเมื่อ Component ถูกโหลด
-onMounted(() => {
-  fetchBillData();
-});
 </script>
 
+<template>
+  <div v-if="isOpen" class="fixed inset-0 z-[60] flex items-center justify-center">
+    <!-- ฉากหลังคลิกเพื่อปิด -->
+    <div class="absolute inset-0 bg-black/60" @click="emit('close')"></div>
+    
+    <!-- ตัวกล่อง Modal -->
+    <div class="relative w-[92%] max-w-[380px] h-[80vh] bg-white rounded-[24px] flex flex-col shadow-2xl overflow-hidden animate-slide-up">
+      
+      <!-- ส่วน Header: โต๊ะ และ ราคารวมทั้งหมด -->
+      <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between shrink-0">
+        <!-- ปุ่มโต๊ะ (สีน้ำเงินเข้มตาม Figma) -->
+        <div class="bg-[#2B1C5B] text-white px-5 py-2 rounded-lg text-sm font-medium shadow-sm">
+          โต๊ะ 01
+        </div>
+        
+        <div class="text-right">
+          <div class="text-[11px] text-gray-500 font-medium">ราคาทั้งหมด</div>
+          <div class="text-lg font-bold text-gray-800 leading-none">{{ cartStore.grandTotalPrice }}฿</div>
+        </div>
+      </div>
+
+      <!-- ส่วนรายการบิล (Scrollable) -->
+      <div class="flex-1 overflow-y-auto p-4 bg-[#F8F9FA]">
+        
+        <div v-if="cartStore.bills.length > 0" class="flex flex-col gap-4">
+          <!-- วนลูปแสดงแต่ละบิล -->
+          <div v-for="bill in cartStore.bills" :key="bill.id" class="bg-white rounded-[20px] p-5 shadow-[0_2px_10px_rgba(0,0,0,0.04)] border border-gray-50">
+            
+            <!-- หัวบิล: หมายเลขบิล & ราคา -->
+            <div class="flex justify-between items-center mb-4">
+              <div class="bg-[#F87171] text-white text-xs font-semibold px-3 py-1 rounded-md shadow-sm">
+                บิลที่ {{ bill.id }}
+              </div>
+              <div class="text-sm font-bold text-gray-800">
+                ราคา <span class="text-base ml-1">{{ bill.totalPrice }}฿</span>
+              </div>
+            </div>
+
+            <!-- รายการอาหารในบิล -->
+            <div class="flex flex-col gap-2 mb-4">
+              <div v-for="(item, index) in bill.items" :key="index" class="flex justify-between items-start text-[13px] text-gray-700">
+                <div class="flex-1 pr-4">
+                  {{ item.name }} <span class="text-gray-400">{{ getTypeLabel(item.typeAddedAs) }}</span>
+                </div>
+                <div class="font-medium text-gray-900">X{{ item.quantity }}</div>
+              </div>
+            </div>
+
+            <!-- เส้นประคั่น -->
+            <div class="border-t border-dashed border-gray-300 my-3"></div>
+
+            <!-- สรุปตัวเลือก น้ำซุป/ความเผ็ด ของบิลนี้ -->
+            <div class="text-[12px] text-gray-500 space-y-1">
+              <div v-if="bill.options.boil">
+                <span class="font-medium text-gray-600">ต้ม:</span> หม่าล่า {{ bill.options.boil }}
+              </div>
+              <div v-if="bill.options.grill">
+                <span class="font-medium text-gray-600">ย่าง:</span> {{ bill.options.grill }}
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- แจ้งเตือนเมื่อยังไม่มีการสั่งซื้อ -->
+        <div v-else class="h-full flex flex-col items-center justify-center text-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-16 h-16 mb-3 opacity-30">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+          </svg>
+          <p class="text-sm font-medium text-gray-500">ยังไม่มีรายการบิล</p>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</template>
+
 <style scoped>
-/* แอนิเมชันตอนเปิด/ปิด Popup */
-.fade-enter-active, .fade-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); scale: 0.95; }
+  to { opacity: 1; transform: translateY(0); scale: 1; }
 }
-.fade-enter-from, .fade-leave-to {
-  opacity: 0;
-}
-.fade-enter-from > div, .fade-leave-to > div {
-  transform: scale(0.95) translateY(10px);
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 </style>
