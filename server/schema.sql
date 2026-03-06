@@ -37,9 +37,11 @@ CREATE TABLE order_items (
 
 CREATE TABLE payments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,     
     table_id INTEGER NOT NULL,
     grand_total REAL NOT NULL,
-    paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES orders(id) 
 );
 
 INSERT INTO products (image_url, name, price, stock, category, cooking_type) VALUES
@@ -94,3 +96,34 @@ INSERT INTO products (image_url, name, price, stock, category, cooking_type) VAL
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Beverage/coke_1_10_bath.jpg', 'โค้ก (1 ขวด)', 10.0, 1000, 'Beverage', NULL),
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Beverage/pepsi_1_10_bath.jpg', 'เป๊ปซี่ (1 ขวด)', 10.0, 1000, 'Beverage', NULL),
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Beverage/liptan_1_10_bath.jpg', 'ลิปตัน (1 ขวด)', 10.0, 1000, 'Beverage', NULL);
+
+
+INSERT INTO orders (
+    table_id, 
+    order_number, 
+    soup_type, 
+    spicy_boiled, 
+    spicy_grilled, 
+    total_price, 
+    status
+) VALUES (
+    1,             
+    1,             
+    'หม่าล่านม',      
+    'เผ็ดมาก',        
+    'เผ็ดกลาง',       
+    65.0,          
+    'unpaid'       
+);
+
+INSERT INTO order_items (
+    order_id, 
+    product_name, 
+    cooking_type, 
+    quantity, 
+    subtotal_price
+) VALUES 
+
+(1, 'หมูสไลด์ (2 ชิ้น)', 'boiled', 3, 15.0),
+(1, 'บร็อคโคลี่ย่าง (1 ไม้)', 'grilled', 4, 20.0),
+(1, 'สามชั้นพันเห็ดเข็มทองย่าง (2 ไม้)', 'grilled', 3, 30.0);
