@@ -38,7 +38,10 @@ const router = useRouter();
 
 const handleLogout = () => {
   if (confirm('คุณต้องการออกจากระบบใช่หรือไม่?')) {
-    router.push('/'); 
+    // ลบสถานะการล็อกอินออกจาก localStorage
+    localStorage.removeItem('isAdminLoggedIn');
+    // เปลี่ยนเส้นทางไปหน้า Login แอดมิน หรือ หน้าแรก
+    router.push('/admin/login'); 
   }
 };
 </script>
