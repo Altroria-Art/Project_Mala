@@ -42,7 +42,6 @@ CREATE TABLE payments (
     paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- เพิ่มข้อมูลทั้งหมดในคำสั่ง INSERT INTO เดียว
 INSERT INTO products (image_url, name, price, stock, category, cooking_type) VALUES
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Meat/boiled_chicken_2_5_bath.jpg', 'เนื้อไก่ (2 ชิ้น)', 5.0, 1000, 'Meat', 'boiled'),
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Meat/boiled_dolly_fish_1_5_bath.jpg', 'ปลาดอลลี่ (1 ชิ้น)', 5.0, 1000, 'Meat', 'boiled'),
