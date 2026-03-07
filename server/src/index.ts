@@ -65,4 +65,31 @@ app.patch('/api/orders/:id/status', async (c) => {
   }
 })
 
+// ดึงข้อมูลบิลรายโต๊ะ (ออเดอร์ที่ยังไม่ได้จ่ายเงินทั้งหมด เช่น unpaid, cooking, served)
+app.get('/api/orders/tables', async (c) => {
+  try {
+    // ดึงออเดอร์ทั้งหมดที่สถานะไม่ใช่ 'paid' (จ่ายแล้ว)
+    const { results: orders } = await c.env.project_mala_db.prepare(
+      "SELECT * FROM orders WHERE status != 'paid' ORDER BY table_id ASC"
+    ).all();
+
+    const tableData = [];
+    for (const order of orders) {
+      const { results: items } = await c.env.project_mala_db.prepare(
+        "SELECT * FROM order_items WHERE order_id = ?"
+      ).bind(order.id).all();
+
+      tableData.push({
+        ...order,
+        items: items
+      });
+    }
+
+    return c.json(tableData);
+  } catch (e: any) {
+    return c.json({ error: 'Database Error', message: e.message }, 500);
+  }
+});
+
+
 export default app

@@ -1,8 +1,11 @@
-DROP TABLE IF EXISTS products;
-DROP TABLE IF EXISTS orders;
-DROP TABLE IF EXISTS order_items;
+-- 1. ลบตารางลูกก่อน (เพื่อไม่ให้ติด Foreign Key)
 DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS order_items;
+-- 2. ลบตารางแม่ทีหลัง
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS products;
 
+-- 3. สร้างตารางใหม่
 CREATE TABLE products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     image_url TEXT,
@@ -44,6 +47,7 @@ CREATE TABLE payments (
     FOREIGN KEY (order_id) REFERENCES orders(id) 
 );
 
+-- 4. ใส่ข้อมูลสินค้า (เมนูทั้งหมดของคุณ)
 INSERT INTO products (image_url, name, price, stock, category, cooking_type) VALUES
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Meat/boiled_chicken_2_5_bath.jpg', 'เนื้อไก่ (2 ชิ้น)', 5.0, 1000, 'Meat', 'boiled'),
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Meat/boiled_dolly_fish_1_5_bath.jpg', 'ปลาดอลลี่ (1 ชิ้น)', 5.0, 1000, 'Meat', 'boiled'),
@@ -97,33 +101,38 @@ INSERT INTO products (image_url, name, price, stock, category, cooking_type) VAL
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Beverage/pepsi_1_10_bath.jpg', 'เป๊ปซี่ (1 ขวด)', 10.0, 1000, 'Beverage', NULL),
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Beverage/liptan_1_10_bath.jpg', 'ลิปตัน (1 ขวด)', 10.0, 1000, 'Beverage', NULL);
 
-
-INSERT INTO orders (
-    table_id, 
-    order_number, 
-    soup_type, 
-    spicy_boiled, 
-    spicy_grilled, 
-    total_price, 
-    status
-) VALUES (
-    1,             
-    1,             
-    'หม่าล่านม',      
-    'เผ็ดมาก',        
-    'เผ็ดกลาง',       
-    65.0,          
-    'unpaid'       
-);
-
-INSERT INTO order_items (
-    order_id, 
-    product_name, 
-    cooking_type, 
-    quantity, 
-    subtotal_price
-) VALUES 
-
+-- 5. ใส่ข้อมูลออเดอร์จำลองแบบระบุ ID (ไม่มีทาง Error แน่นอน)
+INSERT INTO orders (id, table_id, order_number, soup_type, spicy_boiled, spicy_grilled, total_price, status) 
+VALUES (1, 1, 1, 'หม่าล่านม', 'เผ็ดมาก', 'เผ็ดกลาง', 65.0, 'unpaid');
+INSERT INTO order_items (order_id, product_name, cooking_type, quantity, subtotal_price) VALUES 
 (1, 'หมูสไลด์ (2 ชิ้น)', 'boiled', 3, 15.0),
 (1, 'บร็อคโคลี่ย่าง (1 ไม้)', 'grilled', 4, 20.0),
 (1, 'สามชั้นพันเห็ดเข็มทองย่าง (2 ไม้)', 'grilled', 3, 30.0);
+
+INSERT INTO orders (id, table_id, order_number, soup_type, spicy_boiled, spicy_grilled, total_price, status) 
+VALUES (2, 2, 1, 'หม่าล่าเผ็ดชา', 'เผ็ดกลาง', 'เผ็ดกลาง', 65.0, 'cooking');
+INSERT INTO order_items (order_id, product_name, cooking_type, quantity, subtotal_price) VALUES 
+(2, 'เนื้อไก่ (2 ชิ้น)', 'boiled', 2, 10.0),
+(2, 'ไส้ย่าง (1 ไม้)', 'grilled', 3, 30.0),
+(2, 'หมูเด้ง (1 ถุง)', 'boiled', 1, 25.0);
+
+INSERT INTO orders (id, table_id, order_number, soup_type, spicy_boiled, spicy_grilled, total_price, status) 
+VALUES (3, 2, 2, 'ซุปใส', 'ไม่เผ็ด', 'ไม่เผ็ด', 35.0, 'unpaid');
+INSERT INTO order_items (order_id, product_name, cooking_type, quantity, subtotal_price) VALUES 
+(3, 'ข้าวสวย', 'ready', 1, 15.0),
+(3, 'เต้าหู้ไข่ (1 หลอด)', 'boiled', 2, 20.0);
+
+INSERT INTO orders (id, table_id, order_number, soup_type, spicy_boiled, spicy_grilled, total_price, status) 
+VALUES (4, 5, 1, 'ซุปกระดูกหมู', 'เผ็ดน้อย', 'เผ็ดน้อย', 80.0, 'served');
+INSERT INTO order_items (order_id, product_name, cooking_type, quantity, subtotal_price) VALUES 
+(4, 'หมูสามชั้นย่าง (1 ไม้)', 'grilled', 5, 50.0),
+(4, 'เห็ดเข็มทอง (1 คีป)', 'boiled', 2, 10.0),
+(4, 'ชีสบอล (1 ชิ้น)', 'boiled', 4, 20.0);
+
+INSERT INTO orders (id, table_id, order_number, soup_type, spicy_boiled, spicy_grilled, total_price, status) 
+VALUES (5, 1, 2, 'หม่าล่านม', 'เผ็ดมาก', 'เผ็ดมาก', 85.0, 'unpaid');
+INSERT INTO order_items (order_id, product_name, cooking_type, quantity, subtotal_price) VALUES 
+(5, 'แมงกะพรุน (3 ชิ้น)', 'boiled', 2, 20.0),
+(5, 'ลูกชิ้นปลาย่าง (1 ไม้)', 'grilled', 3, 30.0),
+(5, 'สามชั้นพันเห็ดเข็มทองย่าง (2 ไม้)', 'grilled', 2, 20.0),
+(5, 'ข้าวโพดอ่อน (2 ชิ้น)', 'boiled', 3, 15.0);

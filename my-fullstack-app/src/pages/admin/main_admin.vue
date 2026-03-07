@@ -27,7 +27,7 @@
         </div>
 
         <button class="cook-action-btn" @click="startCooking(order.id)">
-          เริ่มปรุงอาหาร
+          ปรุงอาหารเสร็จ
         </button>
       </div>
     </div>
@@ -89,21 +89,16 @@ onMounted(() => {
 
 // --- ส่วนที่แก้ไข: ทำให้ปุ่มทำงานได้จริง ---
 const startCooking = async (id) => {
-  if (confirm(`ยืนยันการเริ่มปรุงออเดอร์หมายเลข ${id}?`)) {
+  if (confirm(`ยืนยันว่าปรุงออเดอร์หมายเลข ${id} เสร็จแล้ว?`)) {
     try {
-      // เรียกใช้ service เพื่อเปลี่ยนสถานะเป็น 'cooking'
-      const result = await adminService.updateOrderStatus(id, 'cooking');
+      // 🌟 แก้ตรงนี้: เปลี่ยนคำว่า 'cooking' เป็น 'served'
+      const result = await adminService.updateOrderStatus(id, 'served'); 
       
       if (result && result.success) {
-        // เมื่อสำเร็จ ให้ดึงข้อมูลใหม่ (ออเดอร์นี้จะหายไปจากหน้า 'unpaid')
         await loadQueue(); 
-        alert('อัปเดตสถานะ: กำลังปรุงอาหาร');
-      } else {
-        alert('เกิดข้อผิดพลาดในการอัปเดตสถานะ');
       }
     } catch (error) {
-      console.error("Error starting cooking:", error);
-      alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+      console.error("Error updating status:", error);
     }
   }
 };
