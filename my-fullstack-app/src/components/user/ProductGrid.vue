@@ -34,8 +34,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'; 
 import { useCartStore } from '../../stores/cartStore'; 
-import { menuService } from '../../services/menuService'; // <--- เรียกใช้ menuService ที่คุณสร้างไว้
+import { menuService } from '../../services/menuService';
 
+// 1. รับค่าโหมดและหมวดหมู่ที่ส่งมาจากหน้า main_user.vue
 const props = defineProps({
   currentCookType: {
     type: String,
@@ -49,29 +50,41 @@ const props = defineProps({
 
 const cartStore = useCartStore();
 
-// ตัวแปรเก็บข้อมูลสินค้า และสถานะการโหลด
+// 2. ประกาศตัวแปรเก็บสินค้า
 const products = ref([]);
 const isLoading = ref(true);
 
-// ดึงข้อมูลจาก menuService ตอนที่หน้าเว็บโหลดขึ้นมา
+// 3. ฟังก์ชันกรองสินค้าที่เปลี่ยนมาใช้ allowedCookTypes (รองรับ Backend จริง)
+const filteredProducts = computed(() => {
+  let result = products.value;
+
+  // 1. กรองตามโหมดหลัก (ต้ม / ย่าง / พร้อมทาน)
+  result = result.filter(product => {
+    // ป้องกัน Error กรณีลืมใส่ allowedCookTypes ใน menuService
+    if (!product.allowedCookTypes) return false; 
+    
+    // เช็คว่าโหมดที่กดอยู่ มีอยู่ในรายการที่สินค้านั้นทำได้หรือไม่
+    return product.allowedCookTypes.includes(props.currentCookType);
+  });
+
+  // 2. กรองตามปุ่มหมวดหมู่ (เนื้อ, ผัก, เครื่องดื่ม/ข้าว)
+  if (props.currentCategory !== 'all') {
+    result = result.filter(product => product.category === props.currentCategory);
+  }
+
+  return result;
+});
+
+// 4. ดึงข้อมูลตอนเปิดหน้าเว็บ
 onMounted(async () => {
   try {
     isLoading.value = true;
-    // ดึงข้อมูลเมนูทั้งหมดมาเก็บไว้ (รอ 0.5 วินาทีตามที่คุณเขียนไว้)
     products.value = await menuService.getMenus(); 
   } catch (error) {
     console.error("ดึงข้อมูลเมนูไม่สำเร็จ:", error);
   } finally {
     isLoading.value = false;
   }
-});
-
-// ฟังก์ชันกรองสินค้าตามหมวดหมู่
-const filteredProducts = computed(() => {
-  if (props.currentCategory === 'all') {
-    return products.value;
-  }
-  return products.value.filter(product => product.category === props.currentCategory);
 });
 </script>
 
