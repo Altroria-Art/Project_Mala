@@ -27,25 +27,28 @@
       <transition name="expand">
         <div class="table-expanded-body" v-if="expandedTableId === table.id">
           <div class="bills-grid">
-            <div v-for="bill in table.bills" :key="bill.billNo" class="bill-card">
+            <div v-for="bill in table.bills" :key="bill.id" class="bill-card">
               <div class="bill-card-header">
-                <span class="bill-no-label">บิลที่ {{ bill.billNo }}</span>
+                <div>
+                  <span class="bill-no-label">บิลที่ {{ bill.billNo }}</span>
+                  <span class="status-badge" :class="bill.status">{{ getStatusText(bill.status) }}</span>
+                </div>
                 <span class="bill-amount">฿{{ getBillTotal(bill).toLocaleString() }}</span>
               </div>
               
               <div class="bill-items-list">
                 <div class="bill-item-row" v-for="(item, idx) in bill.items" :key="idx">
                   <span class="item-name">{{ item.name }}</span>
-                  <span class="item-qty">X{{ item.qty }}</span>
+                  <span class="item-qty">x{{ item.qty }}</span>
                 </div>
                 <div class="receipt-dots">. . . . . . . . . . .</div>
               </div>
 
-              <button class="pay-single-btn">ชำระบิลนี้</button>
+              <button class="pay-single-btn" @click="payBill(bill.id)">ชำระบิลนี้</button>
             </div>
           </div>
 
-          <button class="pay-all-btn">
+          <button class="pay-all-btn" @click="payTable(table.id)">
             ชำระบิลทั้งหมดบนโต๊ะนี้ (฿{{ getTableTotal(table).toLocaleString() }})
           </button>
         </div>
@@ -55,36 +58,101 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import { adminService } from '../../services/adminService'; // เช็ก path ให้ตรงนะ
 
 const expandedTableId = ref(null);
+const tables = ref([]);
 
 const toggleExpand = (id) => {
   expandedTableId.value = expandedTableId.value === id ? null : id;
 };
 
-// ข้อมูลจำลอง (ปรับยอดเงินตามภาพตัวอย่างของคุณ)
-const tables = ref([
-  {
-    id: 1, no: '01', status: 'occupied',
-    bills: [
-      { billNo: 1, items: [{ name: 'หมูสามชั้นสไลด์ [ต้ม]', qty: 5, price: 300 }, { name: 'ผ้าขี้ริ้ววัว [ต้ม]', qty: 5, price: 200 }] },
-      { billNo: 2, items: [{ name: 'หมูสามชั้นสไลด์ [ต้ม]', qty: 5, price: 500 }] }
-    ]
-  },
-  {
-    id: 2, no: '02', status: 'occupied',
-    bills: [
-      { billNo: 1, items: [{ name: 'ชุดผักรวม', qty: 1, price: 300 }] }
-    ]
-  },
-  { id: 3, no: '03', status: 'empty', bills: [] },
-  { id: 4, no: '04', status: 'empty', bills: [] }
-]);
+// ฟังก์ชันดึงและจัดกลุ่มข้อมูลจาก Database
+// ฟังก์ชันดึงและจัดกลุ่มข้อมูลจาก Database
+const loadTables = async () => {
+  try {
+    const rawData = await adminService.getTableBills();
+    if (!Array.isArray(rawData)) return;
 
+    const tableMap = new Map();
+    for (let i = 1; i <= 5; i++) {
+      tableMap.set(i, { id: i, no: String(i).padStart(2, '0'), status: 'empty', bills: [] });
+    }
+
+    rawData.forEach(order => {
+      // 🌟 เพิ่มบรรทัดนี้: ถ้าสถานะยังเป็น unpaid (รอทำ) ให้ข้ามไปเลย ไม่เอามาโชว์!
+      if (order.status === 'unpaid') return; 
+
+      const tableId = order.table_id;
+      if (tableMap.has(tableId)) {
+        const table = tableMap.get(tableId);
+        table.status = 'occupied';
+        
+        table.bills.push({
+          id: order.id,
+          billNo: order.order_number || 1,
+          status: order.status, 
+          items: (order.items || []).map(item => ({
+            name: item.product_name,
+            qty: item.quantity,
+            price: item.subtotal_price / item.quantity
+          }))
+        });
+      }
+    });
+
+    tables.value = Array.from(tableMap.values());
+
+  } catch (error) {
+    console.error("Failed to load tables:", error);
+  }
+};
+
+onMounted(() => {
+  loadTables();
+  setInterval(loadTables, 10000); // รีเฟรชทุก 10 วิ เพื่อความ real-time
+});
+
+// Helper Functions
 const getBillTotal = (bill) => bill.items.reduce((sum, i) => sum + (i.qty * i.price), 0);
 const getTableTotal = (table) => table.bills.reduce((sum, b) => sum + getBillTotal(b), 0);
+
+const getStatusText = (status) => {
+  const statusMap = {
+    'unpaid': 'รอทำ',
+    'cooking': 'เสิร์ฟแล้ว', 
+    'served': 'เสิร์ฟแล้ว'
+  };
+  return statusMap[status] || status;
+};
+
+// --- ฟังก์ชันสำหรับการชำระเงิน (เดี๋ยวเราค่อยมาเชื่อม API ทีหลัง) ---
+const payBill = (billId) => {
+  console.log(`กดชำระเงินบิล ID: ${billId}`);
+  alert(`เตรียมชำระเงินบิล ID: ${billId} (เดี๋ยวมาต่อ API)`);
+};
+
+const payTable = (tableId) => {
+  console.log(`กดชำระเงินรวบยอด โต๊ะ: ${tableId}`);
+  alert(`เตรียมชำระเงินทุกบิลของโต๊ะ ${tableId} (เดี๋ยวมาต่อ API)`);
+};
 </script>
+
+<style scoped>
+/* เอา CSS เดิมของคุณมาแปะตรงนี้ได้เลยครับ! */
+/* ผมขอเพิ่ม CSS เล็กน้อยสำหรับ Status Badge */
+.status-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  font-weight: 600;
+}
+.status-badge.unpaid { background: #fee2e2; color: #ef4444; }
+.status-badge.cooking { background: #d1fae5; color: #10b981; }
+.status-badge.served { background: #d1fae5; color: #10b981; }
+</style>
 
 <style scoped>
 .table-list-container {
