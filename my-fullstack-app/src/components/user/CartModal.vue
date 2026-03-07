@@ -1,162 +1,271 @@
+<template>
+  <Teleport to="body">
+    <div class="cart-modal-overlay">
+      <div class="cart-modal-container">
+        
+        <header class="cart-header">
+          <button class="icon-btn back-btn" @click="closeModal">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
+          <h2 class="header-title">รายการอาหารที่เลือก</h2>
+          <button class="icon-btn delete-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          </button>
+        </header>
+
+        <main class="cart-body">
+          
+          <div v-if="cartStore.items.length === 0" class="empty-cart">
+            ยังไม่มีสินค้าในตะกร้า
+          </div>
+
+          <div v-else class="cart-items-section">
+            
+            <div v-if="boiledItems.length > 0" class="menu-group">
+              <h4 class="group-title">🍲 เมนูแบบต้ม</h4>
+              <div v-for="item in boiledItems" :key="item.id + 'boil'" class="cart-item">
+                <div class="item-info">
+                  <p class="item-name">{{ item.name }}</p>
+                  <p class="item-price">{{ item.price * item.quantity }}฿</p>
+                </div>
+                <div class="qty-control">
+                  <button class="qty-btn" @click="cartStore.decreaseQty(item)">-</button>
+                  <span class="qty-number">{{ item.quantity }}</span>
+                  <button class="qty-btn" @click="cartStore.increaseQty(item)">+</button>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="grilledItems.length > 0" class="menu-group">
+              <h4 class="group-title">🔥 เมนูแบบย่าง</h4>
+              <div v-for="item in grilledItems" :key="item.id + 'grill'" class="cart-item">
+                <div class="item-info">
+                  <p class="item-name">{{ item.name }}</p>
+                  <p class="item-price">{{ item.price * item.quantity }}฿</p>
+                </div>
+                <div class="qty-control">
+                  <button class="qty-btn" @click="cartStore.decreaseQty(item)">-</button>
+                  <span class="qty-number">{{ item.quantity }}</span>
+                  <button class="qty-btn" @click="cartStore.increaseQty(item)">+</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <hr class="divider" v-if="cartStore.items.length > 0" />
+
+          <div v-if="boiledItems.length > 0">
+            <div class="options-section">
+              <h3 class="option-title">น้ำซุป (สำหรับแบบต้ม)</h3>
+              <div class="option-grid">
+                <button class="option-chip" :class="{ active: soupType === 'original' }" @click="soupType = 'original'">ซุปหม่าล่าดั้งเดิม</button>
+                <button class="option-chip" :class="{ active: soupType === 'milk' }" @click="soupType = 'milk'">ซุปหม่าล่านม</button>
+              </div>
+            </div>
+            
+            <div class="options-section">
+              <h3 class="option-title">ความเผ็ดซุป</h3>
+              <div class="option-grid">
+                <button class="option-chip" :class="{ active: boilSpiceLevel === 1 }" @click="boilSpiceLevel = 1">ระดับ 1</button>
+                <button class="option-chip" :class="{ active: boilSpiceLevel === 2 }" @click="boilSpiceLevel = 2">ระดับ 2</button>
+                <button class="option-chip" :class="{ active: boilSpiceLevel === 3 }" @click="boilSpiceLevel = 3">ระดับ 3</button>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="grilledItems.length > 0">
+            <div class="options-section">
+              <h3 class="option-title">ความเผ็ดย่าง</h3>
+              <div class="option-grid">
+                <button class="option-chip" :class="{ active: grillSpiceLevel === 1 }" @click="grillSpiceLevel = 1">ระดับ 1</button>
+                <button class="option-chip" :class="{ active: grillSpiceLevel === 2 }" @click="grillSpiceLevel = 2">ระดับ 2</button>
+                <button class="option-chip" :class="{ active: grillSpiceLevel === 3 }" @click="grillSpiceLevel = 3">ระดับ 3</button>
+              </div>
+            </div>
+          </div>
+
+        </main>
+
+        <footer class="cart-footer">
+          <div class="summary-text">
+            <span>{{ cartStore.totalItems }} รายการ</span>
+            <span class="total-price">รวม {{ cartStore.totalPrice }}฿</span>
+          </div>
+          <button 
+            class="checkout-btn" 
+            :disabled="cartStore.items.length === 0"
+            :class="{ 'opacity-50 cursor-not-allowed': cartStore.items.length === 0 }"
+            @click="showConfirm = true"
+          >
+            สั่งอาหาร
+          </button>
+        </footer>
+
+        <div v-if="showConfirm" class="confirm-overlay">
+          <div class="confirm-box">
+            <div class="icon-warning">🔔</div>
+            <h3>ยืนยันการสั่งอาหาร?</h3>
+            <p>เมื่อกดสั่งอาหารแล้ว ทางร้านจะเริ่มทำอาหารทันที <br/><span class="text-red">"ไม่สามารถยกเลิกออเดอร์ได้"</span></p>
+            <div class="confirm-actions">
+              <button class="cancel-btn" @click="showConfirm = false">ยกเลิก</button>
+              <button class="confirm-btn" @click="confirmOrder">ยืนยันสั่งอาหาร</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </Teleport>
+</template>
+
 <script setup>
 import { ref, computed } from 'vue';
-import { useCartStore } from '../../stores/cartStore'; 
+import { useCartStore } from '../../stores/cartStore';
 
-const props = defineProps({ isOpen: Boolean });
-const emit = defineEmits(['close']);
 const cartStore = useCartStore();
 
-// สถานะขั้นตอน: 'cart' | 'confirm' | 'success'
-const step = ref('cart'); 
+const boiledItems = computed(() => cartStore.items.filter(item => item.typeAddedAs === 'boil'));
+const grilledItems = computed(() => cartStore.items.filter(item => item.typeAddedAs === 'grill'));
 
-const boilSoup = ref('หม่าล่าดั้งเดิม');
-const boilSpice = ref('เผ็ดน้อย');
-const grillSpice = ref('เผ็ดน้อย');
+const soupType = ref('original'); 
+const boilSpiceLevel = ref(1); 
+const grillSpiceLevel = ref(1); 
 
-const soupOptions = ['หม่าล่าดั้งเดิม', 'หม่าล่านม'];
-const spiceOptions = ['เผ็ดน้อย', 'เผ็ดกลาง', 'เผ็ดมาก'];
+const showConfirm = ref(false); // ตัวแปรสำหรับเปิด/ปิดกล่องยืนยัน
 
-const cartBoiledItems = computed(() => cartStore.items.filter(i => i.typeAddedAs === 'boil'));
-const cartGrilledItems = computed(() => cartStore.items.filter(i => i.typeAddedAs === 'grill'));
+const emit = defineEmits(['close']);
+const closeModal = () => emit('close');
 
-const handleFinalOrder = async () => {
-  await cartStore.checkout(1, boilSoup.value, boilSpice.value, grillSpice.value);
-  step.value = 'success';
-};
-
-const handleClose = () => {
-  step.value = 'cart';
-  emit('close');
+// ฟังก์ชันทำงานเมื่อกดยืนยันสั่งอาหาร
+const confirmOrder = async () => {
+  // เรียกฟังก์ชัน checkout จาก Store (สมมติให้โต๊ะที่ 1 ก่อน)
+  await cartStore.checkout('1', soupType.value, boilSpiceLevel.value, grillSpiceLevel.value);
+  
+  showConfirm.value = false; // ปิดกล่องยืนยัน
+  emit('close'); // ปิดหน้าต่างตะกร้าอัตโนมัติ
+  
+  // แจ้งเตือนเล็กน้อยว่าสั่งสำเร็จ (ใช้ Alert ของบราวเซอร์ไปก่อนได้ครับ)
+  // alert('สั่งอาหารเรียบร้อยแล้ว!');
 };
 </script>
 
-<template>
-  <div v-if="isOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-    <!-- Overlay -->
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="handleClose"></div>
-    
-    <!-- [STEP 1] รายการอาหาร (สีเหลือง/เทา ตาม Figma) -->
-    <div v-if="step === 'cart'" class="relative w-full max-w-[380px] h-[85vh] bg-[#E8E1DE] rounded-2xl flex flex-col shadow-2xl overflow-hidden animate-in">
-      <div class="bg-[#B91C1C] text-white py-3.5 px-4 flex justify-between items-center shrink-0">
-        <h2 class="text-sm font-bold mx-auto">รายการอาหารที่เลือก</h2>
-        <button @click="handleClose" class="absolute right-4 text-white text-xl leading-none">&times;</button>
-      </div>
-
-      <div class="flex-1 overflow-y-auto pb-4">
-        <!-- รายการต้ม -->
-        <div v-if="cartBoiledItems.length > 0">
-          <div class="bg-[#FFB800] text-[#7A5B00] font-black px-4 py-2 text-[11px] uppercase tracking-wider">รายการต้ม</div>
-          <div class="p-4 bg-[#EFCFCF]/30 space-y-4">
-            <div class="space-y-2">
-              <p class="text-[10px] font-bold text-gray-600 uppercase">เลือกน้ำซุปหม่าล่า</p>
-              <div class="flex gap-2">
-                <button v-for="s in soupOptions" :key="s" @click="boilSoup = s"
-                  :class="['px-3 py-1.5 rounded-full text-[10px] font-bold transition-all shadow-sm', 
-                  boilSoup === s ? 'bg-white text-gray-800 border border-gray-200' : 'bg-gray-300/40 text-gray-400']">{{ s }}</button>
-              </div>
-            </div>
-            <div class="space-y-2">
-              <p class="text-[10px] font-bold text-gray-600 uppercase">เลือกระดับความเผ็ด</p>
-              <div class="flex gap-2">
-                <button v-for="sp in spiceOptions" :key="sp" @click="boilSpice = sp"
-                  :class="['px-3 py-1.5 rounded-full text-[10px] font-bold transition-all shadow-sm', 
-                  boilSpice === sp ? 'bg-white text-gray-800 border border-gray-200' : 'bg-gray-300/40 text-gray-400']">{{ sp }}</button>
-              </div>
-            </div>
-            <div class="space-y-2 pt-2">
-              <div v-for="item in cartBoiledItems" :key="item.id" class="bg-white rounded-xl p-2.5 flex items-center shadow-sm relative border border-white">
-                <div class="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden shrink-0 mr-3">
-                   <img :src="item.image" class="w-full h-full object-cover" />
-                </div>
-                <div class="flex-1 pr-16">
-                  <p class="text-[12px] font-bold text-gray-800 truncate">{{ item.name }}</p>
-                  <p class="text-[9px] text-gray-400 font-medium">{{ boilSoup }} | {{ boilSpice }}</p>
-                </div>
-                <div class="absolute top-2.5 right-3 text-[11px] font-black text-gray-800">{{ item.price }}฿</div>
-                <div class="absolute bottom-2.5 right-2.5 flex items-center gap-2.5">
-                  <button @click="cartStore.decreaseQty(item)" class="w-5 h-5 flex items-center justify-center rounded-full border border-gray-300 text-gray-400 text-xs font-bold">-</button>
-                  <span class="text-xs font-black w-3 text-center text-gray-700">{{ item.quantity }}</span>
-                  <button @click="cartStore.increaseQty(item)" class="w-5 h-5 flex items-center justify-center rounded-full bg-[#E87A24] text-white text-xs font-bold">+</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- รายการย่าง -->
-        <div v-if="cartGrilledItems.length > 0">
-          <div class="bg-[#D1D5DB] text-gray-600 font-black px-4 py-2 text-[11px] uppercase tracking-wider">รายการย่าง</div>
-          <div class="p-4 bg-[#EFCFCF]/30 space-y-4">
-             <div class="space-y-2">
-              <p class="text-[10px] font-bold text-gray-600 uppercase">เลือกระดับความเผ็ดเมนูย่าง</p>
-              <div class="flex gap-2">
-                <button v-for="sp in spiceOptions" :key="sp" @click="grillSpice = sp"
-                  :class="['px-3 py-1.5 rounded-full text-[10px] font-bold transition-all shadow-sm', 
-                  grillSpice === sp ? 'bg-white text-gray-800 border border-gray-200' : 'bg-gray-300/40 text-gray-400']">{{ sp }}</button>
-              </div>
-            </div>
-            <div class="space-y-2 pt-2">
-              <div v-for="item in cartGrilledItems" :key="item.id" class="bg-white rounded-xl p-2.5 flex items-center shadow-sm relative border border-white">
-                <div class="w-12 h-12 bg-gray-50 rounded-lg overflow-hidden shrink-0 mr-3">
-                   <img :src="item.image" class="w-full h-full object-cover" />
-                </div>
-                <div class="flex-1 pr-16">
-                  <p class="text-[12px] font-bold text-gray-800 truncate">{{ item.name }}</p>
-                  <p class="text-[9px] text-gray-400 font-medium">{{ grillSpice }}</p>
-                </div>
-                <div class="absolute top-2.5 right-3 text-[11px] font-black text-gray-800">{{ item.price }}฿</div>
-                <div class="absolute bottom-2.5 right-2.5 flex items-center gap-2.5">
-                  <button @click="cartStore.decreaseQty(item)" class="w-5 h-5 flex items-center justify-center rounded-full border border-gray-300 text-gray-400 text-xs font-bold">-</button>
-                  <span class="text-xs font-black w-3 text-center text-gray-700">{{ item.quantity }}</span>
-                  <button @click="cartStore.increaseQty(item)" class="w-5 h-5 flex items-center justify-center rounded-full bg-[#E87A24] text-white text-xs font-bold">+</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="p-5 bg-white border-t border-gray-100 shadow-[0_-4px_15px_rgba(0,0,0,0.05)]">
-        <div class="flex justify-between items-center mb-4">
-          <span class="text-xs font-bold text-gray-400">ยอดรวมทั้งหมด :</span>
-          <span class="text-lg font-black text-gray-900">{{ cartStore.totalPrice }} บาท</span>
-        </div>
-        <button @click="step = 'confirm'" :disabled="cartStore.items.length === 0"
-          class="w-full bg-[#FF0000] text-white py-4 rounded-2xl font-black text-base shadow-lg shadow-red-200 active:scale-[0.98] transition-all disabled:opacity-30">
-          ยืนยันสั่งซื้อ
-        </button>
-      </div>
-    </div>
-
-    <!-- [STEP 2] ยืนยันการสั่งซื้อ? (Pop-up กลางจอ) -->
-    <div v-if="step === 'confirm'" class="relative w-[320px] bg-white rounded-[32px] p-8 flex flex-col items-center text-center shadow-2xl animate-pop">
-      <div class="w-20 h-20 bg-[#FDE6D2] rounded-full flex items-center justify-center mb-6">
-        <span class="text-4xl">🤔</span>
-      </div>
-      <h3 class="text-xl font-black text-gray-800 mb-2">ยืนยันการสั่งซื้อ?</h3>
-      <p class="text-[11px] text-gray-400 mb-8 leading-relaxed px-4">กรุณาตรวจสอบรายการของท่านก่อนกดยืนยัน เมื่อทำการยืนยันแล้วไม่สามารถยกเลิกได้</p>
-      <div class="w-full space-y-3">
-        <button @click="handleFinalOrder" class="w-full bg-[#F27F21] text-white py-3.5 rounded-2xl font-bold shadow-lg shadow-orange-100 active:scale-95 transition-all">ยืนยันการสั่ง</button>
-        <button @click="step = 'cart'" class="w-full bg-gray-50 text-gray-400 py-3.5 rounded-2xl font-bold active:scale-95 transition-all">ยกเลิก</button>
-      </div>
-    </div>
-
-    <!-- [STEP 3] สั่งอาหารเรียบร้อยแล้ว (Success Checkmark) -->
-    <div v-if="step === 'success'" class="relative w-[320px] bg-white rounded-[32px] p-8 flex flex-col items-center text-center shadow-2xl animate-pop">
-      <div class="w-20 h-20 bg-[#E1F7E8] rounded-full flex items-center justify-center mb-6">
-        <span class="text-4xl text-[#22C55E]">✅</span>
-      </div>
-      <h3 class="text-xl font-black text-gray-800 mb-2">สั่งอาหารเรียบร้อยแล้ว</h3>
-      <p class="text-[11px] text-gray-400 mb-8 leading-relaxed">กำลังเตรียมเมนูของท่าน เตรียมรับความแซ่บได้เลย</p>
-      <button @click="handleClose" class="w-full bg-[#2B2D42] text-white py-3.5 rounded-2xl font-bold active:scale-95 transition-all">ปิด</button>
-    </div>
-  </div>
-</template>
-
 <style scoped>
-.animate-in { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-.animate-pop { animation: pop 0.4s cubic-bezier(0.17, 0.89, 0.32, 1.4); }
-@keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-@keyframes pop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-::-webkit-scrollbar { display: none; }
+.cart-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: flex-end; z-index: 9999; }
+.cart-modal-container { position: relative; width: 100%; max-width: 480px; height: 95vh; background-color: #fff; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease-out; }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.cart-header { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #f0f0f0; }
+.header-title { margin: 0; font-size: 1.1rem; font-weight: bold; color: #333; }
+.icon-btn { background: none; border: none; cursor: pointer; color: #333; display: flex; align-items: center; justify-content: center; padding: 8px; }
+.delete-btn { color: #ff4d4f; }
+
+.cart-body { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 24px; }
+
+.menu-group { margin-bottom: 20px; }
+.group-title { font-size: 1rem; font-weight: bold; color: #c62828; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #eee; }
+
+.cart-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.item-info { display: flex; flex-direction: column; gap: 4px; }
+.item-name { margin: 0; font-size: 1rem; color: #333; }
+.item-price { margin: 0; font-weight: bold; color: #000; }
+
+.qty-control { display: flex; align-items: center; background-color: #f5f5f5; border-radius: 8px; padding: 4px; }
+.qty-btn { background-color: white; border: none; width: 28px; height: 28px; border-radius: 6px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.qty-number { margin: 0 12px; font-weight: bold; }
+
+.divider { border: none; border-top: 6px solid #f0f2f5; margin: 16px -16px; }
+
+.options-section { margin-bottom: 24px; }
+.option-title { font-size: 0.95rem; font-weight: bold; margin-bottom: 12px; color: #555; }
+.option-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.option-chip { padding: 8px 16px; border: 1px solid #ddd; background-color: #fff; border-radius: 8px; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; }
+.option-chip.active { background-color: #c62828; color: #fff; border-color: #c62828; font-weight: bold; }
+
+.cart-footer { padding: 16px; background-color: #fff; border-top: 1px solid #eee; box-shadow: 0 -4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 12px; z-index: 10; }
+.summary-text { display: flex; justify-content: space-between; font-size: 1rem; color: #555; }
+.total-price { font-weight: bold; color: #000; font-size: 1.1rem; }
+
+.checkout-btn { width: 100%; background-color: #c62828; color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: opacity 0.2s; }
+.checkout-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+.empty-cart { text-align: center; padding: 40px 20px; color: #999; font-size: 1rem; }
+
+/* --- CSS สำหรับป๊อปอัปยืนยันการสั่งอาหาร --- */
+.confirm-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50; /* ให้ลอยทับเนื้อหาตะกร้า */
+  border-radius: 20px 20px 0 0;
+}
+
+.confirm-box {
+  background-color: #fff;
+  width: 85%;
+  max-width: 320px;
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.icon-warning {
+  font-size: 3rem;
+  margin-bottom: 12px;
+}
+
+.confirm-box h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.confirm-box p {
+  margin: 0 0 20px 0;
+  font-size: 0.9rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+.text-red {
+  color: #e53935;
+  font-weight: bold;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.cancel-btn {
+  flex: 1;
+  padding: 12px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.confirm-btn {
+  flex: 1;
+  padding: 12px;
+  background-color: #e53935;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
 </style>
