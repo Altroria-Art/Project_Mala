@@ -2,8 +2,9 @@ import { defineStore } from 'pinia';
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
-    items: [],
-    bills: []
+    // โหลดของที่อยู่ในตะกร้าจาก LocalStorage (ถ้ามี) กันรีเฟรชแล้วตะกร้าหาย
+    items: JSON.parse(localStorage.getItem('cart_items')) || [],
+    bills: [] // ประวัติการสั่ง จะดึงจาก Database แทน
   }),
   
   getters: {
@@ -15,6 +16,11 @@ export const useCartStore = defineStore('cart', {
   },
   
   actions: {
+    // ฟังก์ชันช่วยเซฟตะกร้าลงเครื่อง
+    saveCart() {
+      localStorage.setItem('cart_items', JSON.stringify(this.items));
+    },
+
     addToCart(product, addedAs) {
       const existingItem = this.items.find(item => item.id === product.id && item.typeAddedAs === addedAs);
       if (existingItem) {
@@ -22,11 +28,13 @@ export const useCartStore = defineStore('cart', {
       } else {
         this.items.push({ ...product, quantity: 1, typeAddedAs: addedAs });
       }
+      this.saveCart();
     },
 
     increaseQty(item) {
       const existingItem = this.items.find(i => i.id === item.id && i.typeAddedAs === item.typeAddedAs);
       if (existingItem) existingItem.quantity++;
+      this.saveCart();
     },
 
     decreaseQty(item) {
@@ -39,6 +47,12 @@ export const useCartStore = defineStore('cart', {
           if (index > -1) this.items.splice(index, 1);
         }
       }
+      this.saveCart();
+    },
+
+    clearCart() {
+      this.items = [];
+      this.saveCart();
     },
 
     async checkout(tableNumber, boilSoup, boilSpice, grillSpice) {
@@ -50,19 +64,73 @@ export const useCartStore = defineStore('cart', {
       const hasBoil = orderedItems.some(i => i.typeAddedAs === 'boil');
       const hasGrill = orderedItems.some(i => i.typeAddedAs === 'grill');
 
-      const newBill = {
-        id: this.bills.length + 1, 
+      const payload = {
+        table_id: parseInt(tableNumber) || 1,
         items: orderedItems,
-        totalPrice: billTotal,
-        options: {
-          boil: hasBoil ? `${boilSoup} [${boilSpice}]` : null,
-          grill: hasGrill ? `[${grillSpice}]` : null
-        },
-        timestamp: new Date()
+        total_price: billTotal,
+        soup_type: hasBoil ? boilSoup : null,
+        spicy_boiled: hasBoil ? `ระดับ ${boilSpice}` : null,
+        spicy_grilled: hasGrill ? `ระดับ ${grillSpice}` : null
       };
 
-      this.bills.push(newBill);
-      this.items = [];
+      try {
+        const response = await fetch('http://localhost:8787/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        // สั่งสำเร็จ! จำเบอร์โต๊ะไว้ในเครื่องลูกค้า
+        localStorage.setItem('my_table_id', tableNumber);
+
+        // ล้างตะกร้า
+        this.items = [];
+        this.saveCart();
+
+        // ไปดูดข้อมูลบิลจาก Database มาโชว์
+        await this.syncBills();
+
+      } catch (error) {
+        console.error('Checkout failed:', error);
+        alert('เกิดข้อผิดพลาดในการส่งออเดอร์ กรุณาลองใหม่อีกครั้ง');
+      }
+    },
+
+    // 🌟 ดึงข้อมูลบิลของโต๊ะตัวเองจาก Database
+    async syncBills() {
+      // เช็คก่อนว่าเครื่องนี้เคยสั่งอาหารโต๊ะไหนไป
+      const tableId = localStorage.getItem('my_table_id');
+      if (!tableId) return;
+
+      try {
+        const response = await fetch(`http://localhost:8787/api/orders/table/${tableId}`);
+        if (!response.ok) return;
+        
+        const activeOrders = await response.json();
+
+        // แปลงข้อมูลจาก DB ให้ตรงกับที่ Vue นำไปแสดงผล
+        this.bills = activeOrders.map(order => ({
+          id: order.id,
+          items: order.items.map(i => ({
+            id: i.id,
+            name: i.product_name,
+            quantity: i.quantity,
+            price: i.subtotal_price / i.quantity,
+            typeAddedAs: i.cooking_type
+          })),
+          totalPrice: order.total_price,
+          options: {
+            boil: order.soup_type ? `${order.soup_type} [${order.spicy_boiled}]` : null,
+            grill: order.spicy_grilled ? `[${order.spicy_grilled}]` : null
+          },
+          timestamp: order.created_at,
+          status: order.status
+        }));
+      } catch (error) {
+        console.error('Failed to sync bills:', error);
+      }
     }
   }
 });

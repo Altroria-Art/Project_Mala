@@ -8,10 +8,11 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
           <h2 class="header-title">รายการอาหารที่เลือก</h2>
-          <button class="icon-btn delete-btn">
+          
+          <button class="icon-btn delete-btn" @click="confirmClearCart" v-if="cartStore.items.length > 0">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
           </button>
-        </header>
+          <div v-else style="width: 36px;"></div> </header>
 
         <main class="cart-body">
           
@@ -152,6 +153,20 @@ const showConfirm = ref(false);
 
 const emit = defineEmits(['close']);
 const closeModal = () => emit('close');
+
+// เพิ่มฟังก์ชันสำหรับกดยืนยันก่อนลบตะกร้า
+const confirmClearCart = () => {
+  const isConfirmed = window.confirm("คุณต้องการลบรายการอาหารทั้งหมดในตะกร้าใช่หรือไม่?");
+  if (isConfirmed) {
+    if (cartStore.clearCart) {
+      cartStore.clearCart();
+    } else {
+      // เผื่อว่าใน Store ยังไม่ได้ใส่ฟังก์ชัน clearCart สามารถลบตรงๆ แบบนี้ได้เลย
+      cartStore.items = [];
+      localStorage.setItem('cart_items', JSON.stringify([]));
+    }
+  }
+};
 
 const confirmOrder = async () => {
   await cartStore.checkout('1', soupType.value, boilSpiceLevel.value, grillSpiceLevel.value);
