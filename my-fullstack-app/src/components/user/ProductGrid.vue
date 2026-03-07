@@ -36,7 +36,6 @@ import { ref, computed, onMounted } from 'vue';
 import { useCartStore } from '../../stores/cartStore'; 
 import { menuService } from '../../services/menuService';
 
-// 1. รับค่าโหมดและหมวดหมู่ที่ส่งมาจากหน้า main_user.vue
 const props = defineProps({
   currentCookType: {
     type: String,
@@ -50,24 +49,19 @@ const props = defineProps({
 
 const cartStore = useCartStore();
 
-// 2. ประกาศตัวแปรเก็บสินค้า
 const products = ref([]);
 const isLoading = ref(true);
 
-// 3. ฟังก์ชันกรองสินค้าที่เปลี่ยนมาใช้ allowedCookTypes (รองรับ Backend จริง)
 const filteredProducts = computed(() => {
   let result = products.value;
 
-  // 1. กรองตามโหมดหลัก (ต้ม / ย่าง / พร้อมทาน)
   result = result.filter(product => {
-    // ป้องกัน Error กรณีลืมใส่ allowedCookTypes ใน menuService
+
     if (!product.allowedCookTypes) return false; 
-    
-    // เช็คว่าโหมดที่กดอยู่ มีอยู่ในรายการที่สินค้านั้นทำได้หรือไม่
+
     return product.allowedCookTypes.includes(props.currentCookType);
   });
 
-  // 2. กรองตามปุ่มหมวดหมู่ (เนื้อ, ผัก, เครื่องดื่ม/ข้าว)
   if (props.currentCategory !== 'all') {
     result = result.filter(product => product.category === props.currentCategory);
   }
@@ -75,7 +69,6 @@ const filteredProducts = computed(() => {
   return result;
 });
 
-// 4. ดึงข้อมูลตอนเปิดหน้าเว็บ
 onMounted(async () => {
   try {
     isLoading.value = true;
@@ -89,7 +82,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* --- CSS โครงสร้างเดิม --- */
+
 .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 .product-card { background-color: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
 .image-container { background-color: #e0e0e0; height: 120px; display: flex; justify-content: center; align-items: center; padding: 10px; }

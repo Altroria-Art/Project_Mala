@@ -67,14 +67,12 @@ import CartModal from '../../components/user/CartModal.vue';
 import Billmodal from '../../components/user/Billmodal.vue'; 
 import { useCartStore } from '../../stores/cartStore'; 
 
-// 1. ประกาศตัวแปรก่อน
 const cartStore = useCartStore(); 
 const isCartOpen = ref(false);
 const isBillOpen = ref(false); 
 const cookType = ref('boil'); 
 const currentCategory = ref('all'); 
 
-// 2. ค่อยประกาศฟังก์ชันที่เรียกใช้ตัวแปรด้านบน
 const openCart = () => { isCartOpen.value = true; };
 const closeCart = () => { isCartOpen.value = false; };
 
@@ -85,7 +83,7 @@ const changeMode = (mode) => {
   cookType.value = mode;
 
   if (mode === 'ready') {
-    currentCategory.value = 'drink';
+    currentCategory.value = 'all';
   } 
   else if (currentCategory.value === 'drink') {
     currentCategory.value = 'all';
@@ -120,4 +118,36 @@ const changeMode = (mode) => {
 .cart-info { display: flex; align-items: center; }
 .total-price { font-size: 1.1rem; font-weight: bold; color: #333; }
 .checkout-btn { background-color: #e53935; color: white; border: none; padding: 12px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 1rem; }
+.cook-btn, .category-btn, .checkout-btn, .icon-btn {
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+.cook-btn:active, .category-btn:active, .checkout-btn:active, .icon-btn:active {
+  transform: scale(0.92);
+}
+.cook-btn.active, .category-btn.active {
+  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2);
+}
+.brand-title {
+  margin: 0;
+  font-family: 'Permanent Marker', cursive; 
+  font-size: 1.8rem;
+  font-weight: 400;  
+  color: #e53935; 
+  line-height: 1.1;
+  letter-spacing: 1px;
+
+  text-shadow: 2px 2px 0px #000; 
+  transform: rotate(-2deg); 
+}
+
+.brand-subtitle {
+  margin: 0;
+  margin-top: 4px;
+  font-family: 'Prompt', sans-serif; /* ใช้ Prompt คู่กันจะดูแพงมาก */
+  font-size: 0.6rem;
+  color: #333;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
 </style>
