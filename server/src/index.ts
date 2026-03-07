@@ -91,5 +91,66 @@ app.get('/api/orders/tables', async (c) => {
   }
 });
 
+app.post('/api/orders', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { table_id, items, total_price, soup_type, spicy_boiled, spicy_grilled } = body;
 
+    // 1. บันทึกข้อมูลลงตาราง orders และดึง id ที่เพิ่งสร้างกลับมา (RETURNING id)
+    const orderResult = await c.env.project_mala_db.prepare(
+      `INSERT INTO orders (table_id, soup_type, spicy_boiled, spicy_grilled, total_price, status) 
+       VALUES (?, ?, ?, ?, ?, 'unpaid') RETURNING id`
+    ).bind(
+      table_id, 
+      soup_type || null, 
+      spicy_boiled || null, 
+      spicy_grilled || null, 
+      total_price
+    ).first();
+
+    const order_id = orderResult.id;
+
+    // 2. บันทึกรายการอาหารแต่ละรายการลงตาราง order_items
+    for (const item of items) {
+      await c.env.project_mala_db.prepare(
+        `INSERT INTO order_items (order_id, product_name, cooking_type, quantity, subtotal_price) 
+         VALUES (?, ?, ?, ?, ?)`
+      ).bind(
+        order_id, 
+        item.name, 
+        item.typeAddedAs, // 'boil', 'grill', หรือ 'ready'
+        item.quantity, 
+        item.price * item.quantity
+      ).run();
+    }
+
+    return c.json({ success: true, order_id: order_id, message: "สร้างออเดอร์สำเร็จ!" });
+  } catch (e: any) {
+    return c.json({ error: 'Create Order Failed', message: e.message }, 500);
+  }
+});
+
+app.get('/api/orders/table/:table_id', async (c) => {
+  const table_id = c.req.param('table_id');
+  try {
+    // หาออเดอร์ของโต๊ะนี้ ที่สถานะไม่ใช่ paid
+    const { results: orders } = await c.env.project_mala_db.prepare(
+      "SELECT * FROM orders WHERE table_id = ? AND status != 'paid' ORDER BY created_at ASC"
+    ).bind(table_id).all();
+
+    const tableData = [];
+    for (const order of orders) {
+      // ดึงรายการอาหารของแต่ละบิล
+      const { results: items } = await c.env.project_mala_db.prepare(
+        "SELECT * FROM order_items WHERE order_id = ?"
+      ).bind(order.id).all();
+
+      tableData.push({ ...order, items });
+    }
+
+    return c.json(tableData);
+  } catch (e: any) {
+    return c.json({ error: 'Database Error', message: e.message }, 500);
+  }
+});
 export default app

@@ -61,7 +61,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'; 
+// เพิ่ม onMounted เข้ามาที่นี่
+import { ref, onMounted } from 'vue'; 
 import ProductGrid from '../../components/user/ProductGrid.vue';
 import CartModal from '../../components/user/CartModal.vue'; 
 import Billmodal from '../../components/user/Billmodal.vue'; 
@@ -72,6 +73,17 @@ const isCartOpen = ref(false);
 const isBillOpen = ref(false); 
 const cookType = ref('boil'); 
 const currentCategory = ref('all'); 
+
+// ดึงข้อมูลบิลเมื่อโหลดหน้าเว็บ
+onMounted(() => {
+  // ดึงทันทีที่โหลดเสร็จ 1 ครั้ง
+  cartStore.syncBills();
+  
+  // ให้ดึงข้อมูลเช็คบิลใหม่ทุกๆ 10 วินาที
+  setInterval(() => {
+    cartStore.syncBills();
+  }, 10000);
+});
 
 const openCart = () => { isCartOpen.value = true; };
 const closeCart = () => { isCartOpen.value = false; };
@@ -135,7 +147,6 @@ const changeMode = (mode) => {
   color: #e53935; 
   line-height: 1.1;
   letter-spacing: 1px;
-
   text-shadow: 2px 2px 0px #000; 
   transform: rotate(-2deg); 
 }
@@ -143,7 +154,7 @@ const changeMode = (mode) => {
 .brand-subtitle {
   margin: 0;
   margin-top: 4px;
-  font-family: 'Prompt', sans-serif; /* ใช้ Prompt คู่กันจะดูแพงมาก */
+  font-family: 'Prompt', sans-serif; 
   font-size: 0.6rem;
   color: #333;
   font-weight: 700;
