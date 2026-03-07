@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+body, html {
+  margin: 0;
+  padding: 0;
+  background-color: #e0e0e0; 
+  font-family: 'Prompt', 'Noto Sans Thai', sans-serif; 
+}
+
+* {
+  box-sizing: border-box;
+}

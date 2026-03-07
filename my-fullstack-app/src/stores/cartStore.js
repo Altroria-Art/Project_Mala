@@ -2,17 +2,15 @@ import { defineStore } from 'pinia';
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
-    items: [], // เก็บรายการอาหารในตะกร้า
-    bills: []  // <-- ต้องมีอันนี้ เพื่อเก็บประวัติบิล
+    items: [],
+    bills: []
   }),
   
   getters: {
     totalItems: (state) => state.items.reduce((total, item) => total + item.quantity, 0),
     totalPrice: (state) => state.items.reduce((total, item) => total + (item.price * item.quantity), 0),
-    
-    // ไว้นับจำนวนบิลโชว์ที่ไอคอน
+ 
     orderCount: (state) => state.bills.length,
-    // ราคารวมทุกบิล
     grandTotalPrice: (state) => state.bills.reduce((total, bill) => total + bill.totalPrice, 0)
   },
   
@@ -42,8 +40,7 @@ export const useCartStore = defineStore('cart', {
         }
       }
     },
-    
-    // อัปเดตฟังก์ชันนี้ ให้รับค่าน้ำซุป/ความเผ็ด และสร้างบิล
+
     async checkout(tableNumber, boilSoup, boilSpice, grillSpice) {
       if (this.items.length === 0) return;
 
@@ -64,8 +61,8 @@ export const useCartStore = defineStore('cart', {
         timestamp: new Date()
       };
 
-      this.bills.push(newBill); // บันทึกบิล
-      this.items = []; // เคลียร์ตะกร้า
+      this.bills.push(newBill);
+      this.items = [];
     }
   }
 });

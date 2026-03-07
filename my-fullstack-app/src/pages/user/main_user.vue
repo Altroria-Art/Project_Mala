@@ -1,103 +1,308 @@
-<script setup>
-import { ref, computed } from 'vue';
-import { useCartStore } from '../../stores/cartStore'; 
-import Navbar from '../../components/user/navbar.vue';
-import CookTypeSelector from '../../components/user/CookTypeSelector.vue';
-import ProductGrid from '../../components/user/ProductGrid.vue';
-import CartModal from '../../components/user/CartModal.vue'; 
-import BillModal from '../../components/user/BillModal.vue';
-
-// เรียกใช้งาน Store สำหรับจัดการตะกร้าและบิล
-const cartStore = useCartStore();
-
-// สถานะการเปิด/ปิดหน้าต่าง Modal
-const isCartOpen = ref(false); 
-const isBillOpen = ref(false);
-const cookType = ref('boil'); // ค่าเริ่มต้นหมวดการปรุง
-
-// ข้อมูลรายการอาหารจำลอง
-const allProducts = ref([
-  { id: 1, name: 'หมูสามชั้นสไลซ์/3 ชิ้น', price: 10, category: 'meat', cookType: 'boil', image: 'https://images.unsplash.com/photo-1628268909376-e8c44bb3153f?w=200&h=200&fit=crop' },
-  { id: 2, name: 'สันคอหมูสไลซ์/3 ชิ้น', price: 10, category: 'meat', cookType: 'boil', image: 'https://images.unsplash.com/photo-1606489379685-ce1fc80104f6?w=200&h=200&fit=crop' },
-  { id: 3, name: 'เส้นมันหนึบ', price: 20, category: 'other', cookType: 'boil', image: 'https://images.unsplash.com/photo-1582878826629-29b7ad1cb431?w=200&h=200&fit=crop' },
-  { id: 4, name: 'เส้นบุก', price: 20, category: 'other', cookType: 'boil', image: 'https://images.unsplash.com/photo-1608500218890-c4f7131b26f1?w=200&h=200&fit=crop' },
-  { id: 7, name: 'ผักบุ้ง', price: 10, category: 'veg', cookType: 'boil', image: 'https://images.unsplash.com/photo-1628773822503-72216892ba09?w=200&h=200&fit=crop' },
-  { id: 9, name: 'เนื้อสวรรค์เสียบไม้/1 ไม้', price: 10, category: 'meat', cookType: 'grill', image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&h=200&fit=crop' },
-  { id: 10, name: 'ฮั่นแน่เนื้อสวรรค์/1 ไม้', price: 10, category: 'meat', cookType: 'grill', image: 'https://images.unsplash.com/photo-1544025162-8356bbbcdd29?w=200&h=200&fit=crop' },
-  { id: 11, name: 'กระเจี๊ยบเขียวย่าง', price: 10, category: 'veg', cookType: 'grill', image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5e?w=200&h=200&fit=crop' },
-  { id: 5, name: 'เต้าหู้ปลา/3 ชิ้น', price: 10, category: 'other', cookType: 'both', image: 'https://images.unsplash.com/photo-1596649298818-a6d8011c272a?w=200&h=200&fit=crop' },
-  { id: 6, name: 'เต้าหู้ชีส/3 ชิ้น', price: 10, category: 'other', cookType: 'both', image: 'https://images.unsplash.com/photo-1625937759419-4809e2e6c4ea?w=200&h=200&fit=crop' },
-]);
-
-// กรองสินค้าที่จะแสดงตามหมวดการปรุง (ต้ม/ย่าง)
-const displayedProducts = computed(() => {
-  return allProducts.value.filter(
-    item => item.cookType === cookType.value || item.cookType === 'both'
-  );
-});
-
-// ฟังก์ชันจัดการเหตุการณ์ต่างๆ
-const handleAddToCart = (product) => cartStore.addToCart(product, cookType.value);
-const handleOpenCart = () => isCartOpen.value = true;
-const handleCloseCart = () => isCartOpen.value = false;
-const handleOpenBill = () => isBillOpen.value = true;
-const handleCloseBill = () => isBillOpen.value = false;
-</script>
-
 <template>
-  <!-- พื้นหลังดำด้านนอกสุดเพื่อให้เห็นขอบเขตหน้าจอมือถือชัดเจน -->
-  <div class="min-h-screen bg-zinc-900 flex justify-center overflow-x-hidden">
+  <div class="mobile-app-container">
     
-    <!-- Mobile Container: จำกัดความกว้างที่ 480px และจัดให้อยู่ตรงกลาง -->
-    <div class="w-full max-w-[480px] bg-[#F4F4F5] min-h-screen relative shadow-2xl flex flex-col overflow-x-hidden border-x border-zinc-800/50">
-      
-      <!-- Navbar -->
-      <Navbar 
-        class="shrink-0"
-        :cartCount="cartStore.totalItems"
-        :orderCount="cartStore.orderCount"
-        @open-cart="handleOpenCart"
-        @open-bill="handleOpenBill"
-      />
+    <header class="app-header">
+      <div class="header-top">
+        <div class="logo-area">
+          <div class="logo-wrapper">
+            <img src="../../assets/logo.png" alt="Mala Verse Logo" class="logo-img" />
+          </div>
+          <div class="brand-text">
+            <h1 class="brand-title">Mala Verse</h1>
+            <p class="brand-subtitle">MALAVERSE HOT POT & GRILL</p>
+          </div>
+        </div>
+        
+        <div class="header-icons">
+          <button class="icon-btn" @click="openBill">
+            📋 <span class="badge" v-if="cartStore.orderCount > 0">{{ cartStore.orderCount }}</span>
+          </button>
+          <button class="icon-btn cart-icon-top" @click="openCart">
+            🛒 <span class="badge" v-if="cartStore.totalItems > 0">{{ cartStore.totalItems }}</span>
+          </button>
+        </div>
+      </div>
+    </header>
 
-      <!-- ส่วนเนื้อหาหลัก: ใส่ overflow-y-auto เพื่อให้เลื่อนได้แค่ในพื้นที่นี้ -->
-      <main class="flex-1 px-5 pt-6 pb-28 overflow-y-auto overflow-x-hidden scroll-smooth">
-        <CookTypeSelector v-model="cookType" />
-        <ProductGrid 
-          :products="displayedProducts" 
-          @add-to-cart="handleAddToCart" 
-        />
-      </main>
+    <main class="app-content">
+      <div class="cook-type-section">
+        <button class="cook-btn" :class="{ active: cookType === 'boil' }" @click="cookType = 'boil'">
+          <span class="emoji">🍲</span><span class="font-bold">แบบต้ม</span>
+        </button>
+        <button class="cook-btn" :class="{ active: cookType === 'grill' }" @click="cookType = 'grill'">
+          <span class="emoji">🔥</span><span class="font-bold">แบบย่าง</span>
+        </button>
+      </div>
 
-      <!-- ส่วนจัดการหน้าต่างป๊อปอัพต่างๆ -->
-      <CartModal :isOpen="isCartOpen" @close="handleCloseCart" />
-      <BillModal :isOpen="isBillOpen" @close="handleCloseBill" />
+      <div class="category-scroll">
+        <button class="category-btn" :class="{ active: currentCategory === 'all' }" @click="currentCategory = 'all'">ทั้งหมด</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'meat' }" @click="currentCategory = 'meat'">เนื้อ</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'veg' }" @click="currentCategory = 'veg'">ผัก</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'other' }" @click="currentCategory = 'other'">อื่นๆ</button>
+      </div>
 
+      <ProductGrid :current-cook-type="cookType" :current-category="currentCategory" />
+    </main>
+
+    <div class="bottom-cart-bar">
+      <div class="cart-info">
+        <span class="total-price">ยอดรวม: ฿ {{ cartStore.totalPrice }}</span>
+      </div>
+      <button class="checkout-btn" @click="openCart">ดูตะกร้า / สั่งอาหาร</button>
     </div>
+
+    <CartModal v-if="isCartOpen" @close="closeCart" />
+    <Billmodal v-if="isBillOpen" @close="closeBill" />
+
   </div>
 </template>
 
-<style>
-/* ตั้งค่าฟอนต์และพื้นฐาน CSS */
-@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+<script setup>
+import { ref } from 'vue'; 
+import ProductGrid from '../../components/user/ProductGrid.vue';
+import CartModal from '../../components/user/CartModal.vue'; 
+import Billmodal from '../../components/user/Billmodal.vue'; 
+import { useCartStore } from '../../stores/cartStore'; 
 
-body {
-  font-family: 'Kanit', sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #18181b; /* สีดำนอก Container */
+const cartStore = useCartStore(); 
+const isCartOpen = ref(false);
+const isBillOpen = ref(false); 
+const cookType = ref('boil'); 
+const currentCategory = ref('all'); 
+
+const openCart = () => { isCartOpen.value = true; };
+const closeCart = () => { isCartOpen.value = false; };
+
+const openBill = () => { isBillOpen.value = true; };
+const closeBill = () => { isBillOpen.value = false; };
+</script>
+
+<style scoped>
+/* ดึงฟอนต์ Montserrat มาใช้เฉพาะกับโลโก้ให้ดูพรีเมียม */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@800;900&display=swap');
+
+/* กำหนดกรอบให้เป็นมือถือ */
+.mobile-app-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background-color: #f0f2f5;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1); 
 }
 
-/* ป้องกันการเลื่อนหน้าจอด้านข้างของมือถือ */
-html, body {
-  overflow-x: hidden;
-  position: relative;
+/* Header */
+.app-header {
+  background-color: #fff;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* --- CSS สำหรับโลโก้และชื่อร้าน (สไตล์เดียวกับ Admin) --- */
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-wrapper {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  flex-shrink: 0;
+}
+
+.logo-img {
   width: 100%;
   height: 100%;
+  object-fit: cover;
 }
 
-/* ซ่อน Scrollbar สำหรับ Browser ส่วนใหญ่ */
-::-webkit-scrollbar {
-  display: none;
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.brand-title {
+  margin: 0;
+  /* บังคับใช้ฟอนต์ Montserrat เฉพาะจุดนี้ ให้ดูหนาและแพง */
+  font-family: 'Montserrat', sans-serif; 
+  font-size: 1.35rem; 
+  font-weight: 900; /* หนาพิเศษ */
+  color: #1f2937;
+  line-height: 1.1;
+  letter-spacing: 0px;
+}
+
+.brand-subtitle {
+  margin: 0;
+  margin-top: 2px;
+  /* บังคับใช้ฟอนต์ Montserrat ให้เข้าชุดกัน */
+  font-family: 'Montserrat', sans-serif; 
+  font-size: 0.55rem;
+  color: #e53935;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1.5px; /* ถ่างตัวหนังสือออกนิดนึงให้ดูพรีเมียม */
+}
+/* ----------------------------------------------- */
+
+/* จัดกลุ่มไอคอนมุมขวาบน */
+.header-icons {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-right: 4px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background-color: #e53935;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 50%;
+  font-weight: bold;
+}
+
+/* ปุ่มแบบต้ม / แบบย่าง */
+.cook-type-section {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  margin-top: 8px;
+}
+
+.cook-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background-color: #fff;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: all 0.2s;
+}
+
+.cook-btn .emoji {
+  font-size: 1.8rem;
+  margin-bottom: 4px;
+}
+
+.cook-btn.active {
+  background-color: #fce4e4; 
+  border-color: #e53935; 
+  color: #e53935;
+}
+
+/* หมวดหมู่แนวนอน */
+.category-scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  scrollbar-width: none; 
+}
+.category-scroll::-webkit-scrollbar {
+  display: none; 
+}
+
+.category-btn {
+  white-space: nowrap;
+  padding: 8px 24px;
+  border-radius: 20px;
+  border: none;
+  background-color: #fff;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: all 0.3s;
+}
+
+.category-btn.active {
+  background-color: #fce4e4;
+  color: #000;
+  font-weight: bold;
+}
+
+/* เนื้อหาหลัก */
+.app-content {
+  flex: 1;
+  padding: 0 16px 16px 16px;
+  padding-bottom: 100px; 
+  overflow-y: auto;
+}
+
+/* แถบด้านล่างปรับเป็นแบบลอย (Floating Bar) */
+.bottom-cart-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 448px;
+  background-color: #fff;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+  border-radius: 30px;
+  z-index: 20;
+}
+
+.cart-info {
+  display: flex;
+  align-items: center;
+}
+
+.total-price {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.checkout-btn {
+  background-color: #e53935;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 1rem;
 }
 </style>
