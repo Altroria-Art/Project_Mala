@@ -35,41 +35,77 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+// ตรวจสอบ path ให้ตรงกับที่เก็บไฟล์ adminService.js ของคุณ
+import { adminService } from '../../services/adminService'; 
 
-// ข้อมูลจำลองสำหรับหน้าคิว (อิงตามโครงสร้างที่คุณเคยใช้)
-const queueList = ref([
-  {
-    id: 1,
-    tableNo: '01',
-    billNo: '1',
-    time: '10:12:00',
-    items: [
-      { name: 'หมูสามชั้นสไลด์/3 ชิ้น [ต้ม]', qty: 5 },
-      { name: 'ผ้าขี้ริ้ววัว/3ชิ้น [ต้ม]', qty: 5 },
-      { name: 'เต้าหู้ไข่/3 ชิ้น [ต้ม]', qty: 5 },
-      { name: 'ไส้วัว [ต้ม]', qty: 5 }
-    ],
-    hasMore: false,
-    notes: ['[ต้ม] เผ็ดกลาง']
-  },
-  {
-    id: 2,
-    tableNo: '02',
-    billNo: '1',
-    time: '10:13:00',
-    items: [
-      { name: 'สามชั้นพันเห็ดเข็มทอง [ย่าง]', qty: 5 },
-      { name: 'ไส้กรอก [ย่าง]', qty: 5 }
-    ],
-    hasMore: true,
-    notes: ['[ย่าง] เผ็ดกลาง']
+const queueList = ref([]);
+
+// ฟังก์ชันดึงข้อมูลจาก Backend (คงเดิมไว้)
+const loadQueue = async () => {
+  try {
+    const rawData = await adminService.getQueue();
+    // ถ้า rawData ไม่ใช่ Array ให้หยุดทำงานก่อนแอปพัง
+    if (!Array.isArray(rawData)) {
+      console.warn("Data is not an array:", rawData);
+      return;
+    }
+    
+    queueList.value = rawData.map(order => {
+      const notes = [];
+      if (order.soup_type) notes.push(`น้ำซุป: ${order.soup_type}`);
+      if (order.spicy_boiled) notes.push(`[ต้ม] ${order.spicy_boiled}`);
+      if (order.spicy_grilled) notes.push(`[ย่าง] ${order.spicy_grilled}`);
+
+      // จัดการวันที่ให้ปลอดภัย
+      const timeString = order.created_at 
+        ? new Date(order.created_at).toLocaleTimeString('th-TH') 
+        : 'ไม่ระบุเวลา';
+
+      return {
+        id: order.id,
+        tableNo: String(order.table_id || 0).padStart(2, '0'),
+        billNo: order.order_number || 1,
+        time: timeString,
+        notes: notes,
+        hasMore: false,
+        // ป้องกัน Error ถ้า order.items เป็น null หรือ undefined
+        items: (order.items || []).map(item => ({
+          name: item.product_name, 
+          qty: item.quantity
+        }))
+      };
+    });
+  } catch (error) {
+    console.error("Failed to load queue:", error);
   }
-]);
+};
 
-const startCooking = (id) => {
-  console.log(`กำลังเริ่มปรุงออเดอร์ ID: ${id}`);
-  // เพิ่ม Logic สำหรับจัดการสถานะออเดอร์ตรงนี้
+onMounted(() => {
+  loadQueue();
+  // แถม: ตั้งเวลาให้รีเฟรชข้อมูลทุก 30 วินาทีอัตโนมัติ
+  setInterval(loadQueue, 30000); 
+});
+
+// --- ส่วนที่แก้ไข: ทำให้ปุ่มทำงานได้จริง ---
+const startCooking = async (id) => {
+  if (confirm(`ยืนยันการเริ่มปรุงออเดอร์หมายเลข ${id}?`)) {
+    try {
+      // เรียกใช้ service เพื่อเปลี่ยนสถานะเป็น 'cooking'
+      const result = await adminService.updateOrderStatus(id, 'cooking');
+      
+      if (result && result.success) {
+        // เมื่อสำเร็จ ให้ดึงข้อมูลใหม่ (ออเดอร์นี้จะหายไปจากหน้า 'unpaid')
+        await loadQueue(); 
+        alert('อัปเดตสถานะ: กำลังปรุงอาหาร');
+      } else {
+        alert('เกิดข้อผิดพลาดในการอัปเดตสถานะ');
+      }
+    } catch (error) {
+      console.error("Error starting cooking:", error);
+      alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
+    }
+  }
 };
 </script>
 
