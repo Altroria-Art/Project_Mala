@@ -51,6 +51,21 @@
               </div>
             </div>
 
+            <div v-if="readyItems.length > 0" class="menu-group">
+              <h4 class="group-title">🥤 เครื่องดื่ม & พร้อมทาน</h4>
+              <div v-for="item in readyItems" :key="item.id + 'ready'" class="cart-item">
+                <div class="item-info">
+                  <p class="item-name">{{ item.name }}</p>
+                  <p class="item-price">{{ item.price * item.quantity }}฿</p>
+                </div>
+                <div class="qty-control">
+                  <button class="qty-btn" @click="cartStore.decreaseQty(item)">-</button>
+                  <span class="qty-number">{{ item.quantity }}</span>
+                  <button class="qty-btn" @click="cartStore.increaseQty(item)">+</button>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <hr class="divider" v-if="cartStore.items.length > 0" />
@@ -127,30 +142,26 @@ const cartStore = useCartStore();
 
 const boiledItems = computed(() => cartStore.items.filter(item => item.typeAddedAs === 'boil'));
 const grilledItems = computed(() => cartStore.items.filter(item => item.typeAddedAs === 'grill'));
+const readyItems = computed(() => cartStore.items.filter(item => item.typeAddedAs === 'ready'));
 
 const soupType = ref('original'); 
 const boilSpiceLevel = ref(1); 
 const grillSpiceLevel = ref(1); 
 
-const showConfirm = ref(false); // ตัวแปรสำหรับเปิด/ปิดกล่องยืนยัน
+const showConfirm = ref(false); 
 
 const emit = defineEmits(['close']);
 const closeModal = () => emit('close');
 
-// ฟังก์ชันทำงานเมื่อกดยืนยันสั่งอาหาร
 const confirmOrder = async () => {
-  // เรียกฟังก์ชัน checkout จาก Store (สมมติให้โต๊ะที่ 1 ก่อน)
   await cartStore.checkout('1', soupType.value, boilSpiceLevel.value, grillSpiceLevel.value);
-  
-  showConfirm.value = false; // ปิดกล่องยืนยัน
-  emit('close'); // ปิดหน้าต่างตะกร้าอัตโนมัติ
-  
-  // แจ้งเตือนเล็กน้อยว่าสั่งสำเร็จ (ใช้ Alert ของบราวเซอร์ไปก่อนได้ครับ)
-  // alert('สั่งอาหารเรียบร้อยแล้ว!');
+  showConfirm.value = false; 
+  emit('close'); 
 };
 </script>
 
 <style scoped>
+/* CSS เหมือนเดิมทั้งหมด */
 .cart-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: flex-end; z-index: 9999; }
 .cart-modal-container { position: relative; width: 100%; max-width: 480px; height: 95vh; background-color: #fff; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease-out; }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -192,80 +203,14 @@ const confirmOrder = async () => {
 .empty-cart { text-align: center; padding: 40px 20px; color: #999; font-size: 1rem; }
 
 /* --- CSS สำหรับป๊อปอัปยืนยันการสั่งอาหาร --- */
-.confirm-overlay {
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 50; /* ให้ลอยทับเนื้อหาตะกร้า */
-  border-radius: 20px 20px 0 0;
-}
-
-.confirm-box {
-  background-color: #fff;
-  width: 85%;
-  max-width: 320px;
-  border-radius: 16px;
-  padding: 24px;
-  text-align: center;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-  animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes popIn {
-  0% { transform: scale(0.8); opacity: 0; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-.icon-warning {
-  font-size: 3rem;
-  margin-bottom: 12px;
-}
-
-.confirm-box h3 {
-  margin: 0 0 10px 0;
-  font-size: 1.2rem;
-  color: #333;
-}
-
-.confirm-box p {
-  margin: 0 0 20px 0;
-  font-size: 0.9rem;
-  color: #666;
-  line-height: 1.5;
-}
-
-.text-red {
-  color: #e53935;
-  font-weight: bold;
-}
-
-.confirm-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.cancel-btn {
-  flex: 1;
-  padding: 12px;
-  background-color: #f3f4f6;
-  color: #4b5563;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.confirm-btn {
-  flex: 1;
-  padding: 12px;
-  background-color: #e53935;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-weight: bold;
-  cursor: pointer;
-}
+.confirm-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 50; border-radius: 20px 20px 0 0; }
+.confirm-box { background-color: #fff; width: 85%; max-width: 320px; border-radius: 16px; padding: 24px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.icon-warning { font-size: 3rem; margin-bottom: 12px; }
+.confirm-box h3 { margin: 0 0 10px 0; font-size: 1.2rem; color: #333; }
+.confirm-box p { margin: 0 0 20px 0; font-size: 0.9rem; color: #666; line-height: 1.5; }
+.text-red { color: #e53935; font-weight: bold; }
+.confirm-actions { display: flex; gap: 12px; }
+.cancel-btn { flex: 1; padding: 12px; background-color: #f3f4f6; color: #4b5563; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+.confirm-btn { flex: 1; padding: 12px; background-color: #e53935; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 </style>
