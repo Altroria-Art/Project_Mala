@@ -12,7 +12,8 @@
           <button class="icon-btn delete-btn" @click="confirmClearCart" v-if="cartStore.items.length > 0">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
           </button>
-          <div v-else style="width: 36px;"></div> </header>
+          <div v-else style="width: 36px;"></div> 
+        </header>
 
         <main class="cart-body">
           
@@ -176,9 +177,36 @@ const confirmOrder = async () => {
 </script>
 
 <style scoped>
-/* CSS เหมือนเดิมทั้งหมด */
-.cart-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: flex-end; z-index: 9999; }
-.cart-modal-container { position: relative; width: 100%; max-width: 480px; height: 95vh; background-color: #fff; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease-out; }
+/* แก้ไขหน่วยความสูงตรงนี้เพื่อแก้บัคมือถือ */
+.cart-modal-overlay { 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100vh; /* เผื่อเบราว์เซอร์เก่า */
+  height: 100dvh; /* แก้บัคยืดในมือถือใหม่ */
+  background-color: rgba(0, 0, 0, 0.5); 
+  display: flex; 
+  justify-content: center; 
+  align-items: flex-end; 
+  z-index: 9999; 
+}
+
+.cart-modal-container { 
+  position: relative; 
+  width: 100%; 
+  max-width: 480px; 
+  height: 100%; /* ให้ยืดตาม max-height */
+  max-height: 85vh; /* เผื่อเบราว์เซอร์เก่า */
+  max-height: 85dvh; /* บังคับความสูงไม่ให้ทะลุจอ */
+  background-color: #fff; 
+  border-radius: 20px 20px 0 0; 
+  display: flex; 
+  flex-direction: column; 
+  overflow: hidden; 
+  animation: slideUp 0.3s ease-out; 
+}
+
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
 .cart-header { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #f0f0f0; }
