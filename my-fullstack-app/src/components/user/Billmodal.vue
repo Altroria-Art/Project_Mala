@@ -98,8 +98,36 @@ const formatGrillOption = (optionStr) => {
 </script>
 
 <style scoped>
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: flex-end; z-index: 9999; }
-.modal-container { position: relative; width: 100%; max-width: 480px; height: 95vh; background-color: #f7f8fa; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease-out; }
+/* แก้ไขความสูงเพื่อแก้บัคมือถือตรงนี้ครับ */
+.modal-overlay { 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100vh; /* เผื่อเบราว์เซอร์เก่า */
+  height: 100dvh; /* แก้บัคหน้าจอยืดในมือถือยุคใหม่ */
+  background-color: rgba(0, 0, 0, 0.5); 
+  display: flex; 
+  justify-content: center; 
+  align-items: flex-end; 
+  z-index: 9999; 
+}
+
+.modal-container { 
+  position: relative; 
+  width: 100%; 
+  max-width: 480px; 
+  height: 100%; /* ให้ความสูงปรับตามเนื้อหา แต่ไม่เกิน max-height */
+  max-height: 85vh; 
+  max-height: 85dvh; /* บังคับไม่ให้ป๊อปอัปดันทะลุขอบบน */
+  background-color: #f7f8fa; 
+  border-radius: 20px 20px 0 0; 
+  display: flex; 
+  flex-direction: column; 
+  overflow: hidden; 
+  animation: slideUp 0.3s ease-out; 
+}
+
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px; background-color: #fff; border-bottom: 1px solid #f0f0f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
