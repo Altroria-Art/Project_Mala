@@ -23,31 +23,46 @@ app.get('/api/products', async (c) => {
   }
 })
 
-// === เพิ่ม API สำหรับอัปเดตข้อมูลเมนู ===
 app.patch('/api/products/:id', async (c) => {
-  const id = c.req.param('id')
-  const body = await c.req.json()
-  
+  const id = c.req.param('id');
   try {
+    // ใช้ parseBody() เพื่อรับข้อมูลแบบ FormData เหมือนตอนเพิ่มเมนู
+    const body = await c.req.parseBody();
+    const name = body['name'] as string;
+    const price = parseFloat(body['price'] as string);
+    const stock = parseInt(body['stock'] as string) || 0;
+    const cooking_type = body['cooking_type'] as string;
+    const category = body['category'] as string;
+    const file = body['image'] as File;
+
+    let imageUrlUpdateQuery = '';
+    let params: any[] = [name, price, stock, category, cooking_type];
+
+    // ถ้ามีการอัปโหลดไฟล์รูปภาพใหม่เข้ามา ให้เอาไปเก็บใน R2 ก่อน
+    if (file && file.name) {
+      const fileName = `uploads/${Date.now()}_${file.name}`;
+      await c.env.mala.put(fileName, await file.arrayBuffer(), {
+        httpMetadata: { contentType: file.type }
+      });
+      const imageUrl = `http://127.0.0.1:8787/${fileName}`;
+      
+      // เพิ่มคำสั่งให้ไปอัปเดตคอลัมน์ image_url ด้วย
+      imageUrlUpdateQuery = ', image_url = ?';
+      params.push(imageUrl);
+    }
+
+    params.push(id); // ใส่ id ต่อท้ายสำหรับ WHERE
+
+    // อัปเดตข้อมูลลงฐานข้อมูล
     await c.env.project_mala_db.prepare(
-      `UPDATE products 
-       SET name = ?, price = ?, stock = ?, category = ?, cooking_type = ?, image_url = ?
-       WHERE id = ?`
-    ).bind(
-      body.name, 
-      body.price, 
-      body.stock, 
-      body.category, 
-      body.cooking_type, 
-      body.image_url, 
-      id
-    ).run()
+      `UPDATE products SET name = ?, price = ?, stock = ?, category = ?, cooking_type = ?${imageUrlUpdateQuery} WHERE id = ?`
+    ).bind(...params).run();
     
-    return c.json({ success: true, message: 'อัปเดตข้อมูลสำเร็จ' })
+    return c.json({ success: true, message: 'อัปเดตข้อมูลสำเร็จ' });
   } catch (e: any) {
-    return c.json({ error: 'Update Failed', message: e.message }, 500)
+    return c.json({ error: 'Update Failed', message: e.message }, 500);
   }
-})
+});
 
 // === เพิ่ม API สำหรับ Soft Delete เมนู ===
 app.patch('/api/products/:id/delete', async (c) => {
@@ -186,6 +201,120 @@ app.get('/api/orders/table/:table_id', async (c) => {
     return c.json(tableData);
   } catch (e: any) {
     return c.json({ error: 'Database Error', message: e.message }, 500);
+  }
+});
+
+// API สำหรับเพิ่มเมนูใหม่ (รับข้อมูลแบบ multipart/form-data)
+app.post('/api/products', async (c) => {
+  try {
+    // 1. รับข้อมูลจาก Frontend
+    const body = await c.req.parseBody();
+    const name = body['name'] as string;
+    const price = parseFloat(body['price'] as string);
+    const stock = parseInt(body['stock'] as string);
+    const cooking_type = body['cooking_type'] as string;
+    const category = body['category'] as string;
+    const file = body['image'] as File;
+
+    let imageUrl = '';
+
+   // ถ้ามีรูปภาพแนบมา ให้เอาไปเก็บในคลัง R2
+    if (file && file.name) {
+      const fileName = `uploads/${Date.now()}_${file.name}`;
+      
+      await c.env.mala.put(fileName, await file.arrayBuffer(), {
+        httpMetadata: { contentType: file.type }
+      });
+
+      // 🌟 แก้ไขบรรทัดนี้: เปลี่ยนให้ดึงรูปจากเซิร์ฟเวอร์ Local ของเราเอง
+      imageUrl = `http://127.0.0.1:8787/${fileName}`; 
+    }
+
+    // 3. บันทึกข้อมูลลงฐานข้อมูล D1
+    await c.env.project_mala_db.prepare(
+      "INSERT INTO products (image_url, name, price, stock, category, cooking_type) VALUES (?, ?, ?, ?, ?, ?)"
+    ).bind(imageUrl, name, price, stock, category, cooking_type).run();
+
+    return c.json({ success: true, message: 'เพิ่มเมนูสำเร็จ!' });
+
+  } catch (e: any) {
+    return c.json({ error: 'Upload Failed', message: e.message }, 500);
+  }
+});
+
+// 🌟 เพิ่ม API ใหม่: สำหรับเปิดดูรูปภาพที่อัปโหลดไว้
+app.get('/uploads/:filename', async (c) => {
+  const filename = c.req.param('filename');
+  
+  // ไปค้นหาไฟล์รูปในคลัง R2
+  const object = await c.env.mala.get(`uploads/${filename}`);
+
+  if (!object) {
+    return c.text('Image not found', 404);
+  }
+
+  // เซ็ต Header เพื่อบอกให้เบราว์เซอร์รู้ว่านี่คือไฟล์รูปภาพ
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('etag', object.httpEtag);
+
+  return new Response(object.body, { headers });
+});
+
+// 🌟 เพิ่ม API ใหม่: สำหรับเปิดดูรูปภาพที่อัปโหลดไว้
+app.get('/uploads/:filename', async (c) => {
+  const filename = c.req.param('filename');
+  
+  // ไปค้นหาไฟล์รูปในคลัง R2
+  const object = await c.env.mala.get(`uploads/${filename}`);
+
+  if (!object) {
+    return c.text('Image not found', 404);
+  }
+
+  // เซ็ต Header เพื่อบอกให้เบราว์เซอร์รู้ว่านี่คือไฟล์รูปภาพ
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('etag', object.httpEtag);
+
+  return new Response(object.body, { headers });
+});
+
+app.delete('/api/products/:id', async (c) => {
+  const id = c.req.param('id');
+  try {
+    await c.env.project_mala_db.prepare(
+      'DELETE FROM products WHERE id = ?'
+    ).bind(id).run();
+    
+    return c.json({ success: true, message: 'ลบเมนูสำเร็จ' });
+  } catch (e: any) {
+    return c.json({ error: 'Delete Failed', message: e.message }, 500);
+  }
+});
+
+// ==========================================
+// 2. API สำหรับ "แก้ไข" เมนู (PATCH)
+// ==========================================
+app.patch('/api/products/:id', async (c) => {
+  const id = c.req.param('id');
+  try {
+    const body = await c.req.json();
+    
+    await c.env.project_mala_db.prepare(
+      'UPDATE products SET name = ?, price = ?, stock = ?, category = ?, cooking_type = ? WHERE id = ?'
+    ).bind(
+      body.name, 
+      body.price, 
+      body.stock || 0, 
+      body.category, 
+      body.cooking_type, 
+      id
+    ).run();
+    
+    return c.json({ success: true, message: 'อัปเดตข้อมูลสำเร็จ' });
+  } catch (e: any) {
+    return c.json({ error: 'Update Failed', message: e.message }, 500);
   }
 });
 

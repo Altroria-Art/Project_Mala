@@ -1,5 +1,6 @@
 <template>
   <div class="products-container">
+    
     <section class="add-product-card shadow-sm">
       <h2 class="section-title">เพิ่มเมนู</h2>
       
@@ -15,15 +16,18 @@
         <input type="number" v-model="newProduct.price" placeholder="ราคา" class="input-field" />
         <input type="number" v-model="newProduct.stock" placeholder="จำนวน" class="input-field" />
         
-        <select v-model="newProduct.type" class="select-field">
-          <option value="ต้ม">ต้ม</option>
-          <option value="ย่าง">ย่าง</option>
+        <select v-model="newProduct.cooking_type" class="select-field">
+          <option value="boiled">ต้ม</option>
+          <option value="grilled">ย่าง</option>
+          <option value="ready">พร้อมทาน</option>
         </select>
         
         <select v-model="newProduct.category" class="select-field">
-          <option value="เนื้อสัตว์">เนื้อสัตว์</option>
-          <option value="ผัก">ผัก</option>
-          <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+          <option value="Meat">เนื้อสัตว์</option>
+          <option value="vegetable">ผัก</option>
+          <option value="Appetizer">ของกินเล่น</option>
+          <option value="Others">อื่นๆ</option>
+          <option value="Beverage">เครื่องดื่ม</option>
         </select>
       </div>
 
@@ -38,8 +42,7 @@
             <p>ชื่อ: {{ newProduct.name || '-' }}</p>
             <p>ราคา: {{ newProduct.price || 0 }}</p>
             <p>จำนวน: {{ newProduct.stock || 0 }}</p>
-            <p>หมวด : {{ newProduct.type }}</p>
-            <p>หมวดหมู่ : {{ newProduct.category }}</p>
+            <p>ประเภท: {{ newProduct.cooking_type === 'boiled' ? 'ต้ม' : (newProduct.cooking_type === 'grilled' ? 'ย่าง' : 'พร้อมทาน') }}</p>
           </div>
         </div>
         <div class="action-row">
@@ -75,7 +78,15 @@
       <div class="modal-content">
         <h2>แก้ไขเมนู</h2>
         <div class="form-grid">
-          <input type="text" v-model="editingProduct.image_url" placeholder="URL รูปภาพ (ชั่วคราว)" class="input-field" style="width: 100%;" />
+          
+          <div style="width: 100%; display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+            <img v-if="editingProduct.image_url" :src="editingProduct.image_url" alt="Current Image" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;" />
+            <label class="upload-btn" style="flex-grow: 1; text-align: center; margin: 0;">
+              เปลี่ยนรูปภาพ
+              <input type="file" @change="onEditFileChange" accept="image/*" hidden />
+            </label>
+          </div>
+
           <input type="text" v-model="editingProduct.name" placeholder="ชื่อเมนู" class="input-field" />
           <input type="number" v-model="editingProduct.price" placeholder="ราคา" class="input-field" />
           <input type="number" v-model="editingProduct.stock" placeholder="จำนวน" class="input-field" />
@@ -101,7 +112,7 @@
       </div>
     </div>
 
-  </div>
+  </div> 
 </template>
 
 <script setup>
@@ -111,63 +122,111 @@ const newProduct = ref({
   name: '',
   price: null,
   stock: null,
-  type: 'ต้ม',
-  category: 'เนื้อสัตว์'
+  cooking_type: 'boiled', 
+  category: 'Meat'
 });
 
 const previewImage = ref(null);
+const selectedFile = ref(null);
 const products = ref([]);
-const editingProduct = ref(null); // เพิ่มตัวแปรเก็บสถานะแก้ไข
+const editingProduct = ref(null); 
+const editSelectedFile = ref(null);
 
 const fetchProducts = async () => {
   try {
     const response = await fetch('http://127.0.0.1:8787/api/products');
     if (!response.ok) throw new Error('Failed to fetch products');
-    
-    const data = await response.json();
-    products.value = data; 
+    products.value = await response.json(); 
   } catch (error) {
     console.error("🚨 ดึงข้อมูลเมนูล้มเหลว:", error);
   }
 };
 
-onMounted(() => {
-  fetchProducts();
-});
+onMounted(() => fetchProducts());
 
 const onFileChange = (e) => {
   const file = e.target.files[0];
   if (file) {
-    previewImage.value = URL.createObjectURL(file);
+    selectedFile.value = file;
+    previewImage.value = URL.createObjectURL(file); 
   }
 };
 
-const saveProduct = () => {
+const saveProduct = async () => {
   if (!newProduct.value.name) return alert('กรุณาใส่ชื่อเมนู');
-  console.log('บันทึกเมนู:', newProduct.value);
-  alert('บันทึกสำเร็จ!');
+  if (!newProduct.value.price) return alert('กรุณาใส่ราคา');
+
+  const formData = new FormData();
+  formData.append('name', newProduct.value.name);
+  formData.append('price', newProduct.value.price);
+  formData.append('stock', newProduct.value.stock || 0);
+  formData.append('cooking_type', newProduct.value.cooking_type);
+  formData.append('category', newProduct.value.category);
+  
+  if (selectedFile.value) {
+    formData.append('image', selectedFile.value); 
+  }
+
+  try {
+    const response = await fetch('http://127.0.0.1:8787/api/products', {
+      method: 'POST',
+      body: formData 
+    });
+
+    if (!response.ok) throw new Error('Failed to save product');
+
+    alert('บันทึกเมนูสำเร็จ!');
+    
+    newProduct.value = { name: '', price: null, stock: null, cooking_type: 'boiled', category: 'Meat' };
+    previewImage.value = null;
+    selectedFile.value = null;
+    
+    fetchProducts(); 
+  } catch (error) {
+    console.error("🚨 บันทึกล้มเหลว:", error);
+    alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
+  }
 };
 
-// --- ฟังก์ชันสำหรับ Edit และ Delete ---
 const openEditModal = (item) => {
   editingProduct.value = { ...item };
+  editSelectedFile.value = null; 
+};
+
+const onEditFileChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    editSelectedFile.value = file;
+    editingProduct.value.image_url = URL.createObjectURL(file); 
+  }
 };
 
 const saveEditProduct = async () => {
   if (!editingProduct.value.name) return alert('กรุณาใส่ชื่อเมนู');
 
+  const formData = new FormData();
+  formData.append('name', editingProduct.value.name);
+  formData.append('price', editingProduct.value.price);
+  formData.append('stock', editingProduct.value.stock || 0);
+  formData.append('cooking_type', editingProduct.value.cooking_type);
+  formData.append('category', editingProduct.value.category);
+  
+  if (editSelectedFile.value) {
+    formData.append('image', editSelectedFile.value);
+  }
+
   try {
     const response = await fetch(`http://127.0.0.1:8787/api/products/${editingProduct.value.id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(editingProduct.value)
+      body: formData 
     });
 
     if (!response.ok) throw new Error('Failed to update product');
     
     alert('บันทึกการแก้ไขสำเร็จ!');
-    editingProduct.value = null; // ปิด Modal
-    fetchProducts(); // โหลดข้อมูลใหม่
+    editingProduct.value = null; 
+    editSelectedFile.value = null;
+    fetchProducts(); 
   } catch (error) {
     console.error("🚨 แก้ไขข้อมูลล้มเหลว:", error);
     alert('เกิดข้อผิดพลาดในการแก้ไข');
@@ -178,14 +237,14 @@ const confirmDelete = async (id) => {
   if (!confirm('คุณแน่ใจหรือไม่ว่าจะลบเมนูนี้?')) return;
 
   try {
-    const response = await fetch(`http://127.0.0.1:8787/api/products/${id}/delete`, {
-      method: 'PATCH'
+    const response = await fetch(`http://127.0.0.1:8787/api/products/${id}`, {
+      method: 'DELETE'
     });
 
     if (!response.ok) throw new Error('Failed to delete product');
     
     alert('ลบเมนูสำเร็จ!');
-    fetchProducts(); // โหลดข้อมูลใหม่หลังจากลบ (อันที่ลบจะหายไป)
+    fetchProducts(); 
   } catch (error) {
     console.error("🚨 ลบเมนูล้มเหลว:", error);
     alert('เกิดข้อผิดพลาดในการลบ');
