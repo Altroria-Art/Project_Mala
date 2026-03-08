@@ -94,7 +94,7 @@ INSERT INTO products (image_url, name, price, stock, category, cooking_type) VAL
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/vegetable/grilled_eryngii_mushroom_1_5_bath.jpg', 'เห็ดออรินจิย่าง (1 ไม้)', 5.0, 1000, 'vegetable', 'grilled'),
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/vegetable/grilled_okra_1_10_bath.jpg', 'กระเจี๊ยบเขียวย่าง (1 ไม้)', 10.0, 1000, 'vegetable', 'grilled'),
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Others/boiled_sweet_potato_noodles_1_15_bath.jpg', 'เส้นมันเทศ', 15.0, 1000, 'Others', 'boiled'),
-('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Others/boiled_white_konjac_noodles_1_15_bath.jpg', 'เส้นบุกขาว', 15.0, 1000, 'Others', 'boiled'),
+('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Others/boiled_vermicelli_1_15_bath.jpg', 'เส้นบุกขาว', 15.0, 1000, 'Others', 'boiled'),
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Others/boiled_instant_noodles_1_10_bath.jpg', 'มาม่า', 10.0, 1000, 'Others', 'boiled'),
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Others/steamed_rice_1_15_bath.jpg', 'ข้าวสวย', 15.0, 1000, 'Others', NULL),
 ('https://pub-17c841dc329349f081a01a422b92e695.r2.dev/Beverage/coke_1_10_bath.jpg', 'โค้ก (1 ขวด)', 10.0, 1000, 'Beverage', NULL),

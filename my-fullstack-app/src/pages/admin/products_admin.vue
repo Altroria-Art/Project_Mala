@@ -53,8 +53,8 @@
       <div class="product-grid">
         <div v-for="item in products" :key="item.id" class="item-card">
           <div class="item-img">
-             <img v-if="item.image" :src="item.image" alt="Product" />
-             <div v-else class="no-img">ไม่มีรูป</div>
+            <img v-if="item.image_url" :src="item.image_url" alt="Product" />
+            <div v-else class="no-img">ไม่มีรูป</div>
           </div>
           <div class="item-details">
             <h4 class="item-name">{{ item.name }}</h4>
@@ -74,9 +74,8 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 
-// ข้อมูลสำหรับเพิ่มเมนูใหม่
 const newProduct = ref({
   name: '',
   price: null,
@@ -86,10 +85,24 @@ const newProduct = ref({
 });
 
 const previewImage = ref(null);
-const products = ref([
-  { id: 1, name: 'เนื้อริบอาย', price: 89, stock: 50, type: 'ต้ม', category: 'เนื้อสัตว์', image: null },
-  { id: 2, name: 'ผักบุ้ง', price: 20, stock: 100, type: 'ต้ม', category: 'ผัก', image: null }
-]);
+
+const products = ref([]);
+
+const fetchProducts = async () => {
+  try {
+    const response = await fetch('http://127.0.0.1:8787/api/products');
+    if (!response.ok) throw new Error('Failed to fetch products');
+    
+    const data = await response.json();
+    products.value = data; 
+  } catch (error) {
+    console.error("🚨 ดึงข้อมูลเมนูล้มเหลว:", error);
+  }
+};
+
+onMounted(() => {
+  fetchProducts();
+});
 
 const onFileChange = (e) => {
   const file = e.target.files[0];
@@ -100,7 +113,7 @@ const onFileChange = (e) => {
 
 const saveProduct = () => {
   if (!newProduct.value.name) return alert('กรุณาใส่ชื่อเมนู');
-  // Logic สำหรับบันทึกลงฐานข้อมูล
+
   console.log('บันทึกเมนู:', newProduct.value);
   alert('บันทึกสำเร็จ!');
 };
@@ -119,7 +132,6 @@ const saveProduct = () => {
   color: #333;
 }
 
-/* Add Product Card */
 .add-product-card {
   background: white;
   border-radius: 20px;
@@ -153,7 +165,6 @@ const saveProduct = () => {
   min-width: 120px;
 }
 
-/* Preview Section */
 .preview-section {
   border-top: 1px dashed #ddd;
   padding-top: 20px;
@@ -200,7 +211,6 @@ const saveProduct = () => {
   cursor: pointer;
 }
 
-/* Product List Grid */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -216,7 +226,19 @@ const saveProduct = () => {
   flex-direction: column;
 }
 
-.item-img { height: 140px; background: #f3f4f6; position: relative; }
+.item-img { 
+  height: 140px; 
+  background: #f3f4f6; 
+  position: relative; 
+  overflow: hidden; 
+}
+
+.item-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .no-img { display: flex; align-items: center; justify-content: center; height: 100%; color: #999; }
 
 .item-details { padding: 15px; flex-grow: 1; }
