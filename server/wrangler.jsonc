@@ -1,51 +1,52 @@
 {
-	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "server",
-	"main": "src/index.ts",
-	"compatibility_date": "2026-02-14",
-	"d1_databases": [
-		{
-			"binding": "project_mala_db",
-			"database_name": "project-mala-db",
-			"database_id": "b51d9713-460e-492d-922a-58d4340e0ad5"
-		}
-	],
-	"r2_buckets": [
-	  {
-	    "binding": "mala",
-	    "bucket_name": "mala"
-	  }
-	]
-	// "compatibility_flags": [
-	//   "nodejs_compat"
-	// ],
-	// "vars": {
-	//   "MY_VAR": "my-variable"
-	// },
-	// "kv_namespaces": [
-	//   {
-	//     "binding": "MY_KV_NAMESPACE",
-	//     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-	//   }
-	// ],
-	// "r2_buckets": [
-	//   {
-	//     "binding": "MY_BUCKET",
-	//     "bucket_name": "my-bucket"
-	//   }
-	// ],
-	// "d1_databases": [
-	//   {
-	//     "binding": "MY_DB",
-	//     "database_name": "my-database",
-	//     "database_id": ""
-	//   }
-	// ],
-	// "ai": {
-	//   "binding": "AI"
-	// },
-	// "observability": {
-	//   "enabled": true,
-	//   "head_sampling_rate": 1
-	// }
+    "$schema": "node_modules/wrangler/config-schema.json",
+    "name": "server",
+    "main": "src/index.ts",
+    "compatibility_date": "2026-02-14",
+    "account_id": "5e7b495293cc40bfd840b348fc33cd24", 
+    "d1_databases": [
+        {
+            "binding": "project_mala_db",
+            "database_name": "project-mala-db",
+            "database_id": "b51d9713-460e-492d-922a-58d4340e0ad5"
+        }
+    ],
+    "r2_buckets": [
+      {
+        "binding": "mala",
+        "bucket_name": "mala"
+      }
+    ]
+    // "compatibility_flags": [
+    //   "nodejs_compat"
+    // ],
+    // "vars": {
+    //   "MY_VAR": "my-variable"
+    // },
+    // "kv_namespaces": [
+    //   {
+    //     "binding": "MY_KV_NAMESPACE",
+    //     "id": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    //   }
+    // ],
+    // "r2_buckets": [
+    //   {
+    //     "binding": "MY_BUCKET",
+    //     "bucket_name": "my-bucket"
+    //   }
+    // ],
+    // "d1_databases": [
+    //   {
+    //     "binding": "MY_DB",
+    //     "database_name": "my-database",
+    //     "database_id": ""
+    //   }
+    // ],
+    // "ai": {
+    //   "binding": "AI"
+    // },
+    // "observability": {
+    //   "enabled": true,
+    //   "head_sampling_rate": 1
+    // }
 }

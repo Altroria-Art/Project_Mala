@@ -2,7 +2,8 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 
 type Bindings = {
-  project_mala_db: any 
+  project_mala_db: D1Database;
+  mala: R2Bucket;
 }
 
 const app = new Hono<{ Bindings: Bindings }>()
@@ -15,18 +16,50 @@ app.get('/', (c) => {
 
 app.get('/api/products', async (c) => {
   try {
-    // ดึงเฉพาะเมนูที่ยังไม่ถูกลบ
-    const { results } = await c.env.project_mala_db.prepare('SELECT * FROM products WHERE is_deleted = 0').all()
+    const { results } = await c.env.project_mala_db.prepare('SELECT * FROM products').all()
     return c.json(results)
   } catch (e: any) {
     return c.json({ error: 'Database Error', message: e.message }, 500)
   }
 })
 
+app.post('/api/products', async (c) => {
+  try {
+    const body = await c.req.parseBody();
+    const name = body['name'] as string;
+    const price = parseFloat(body['price'] as string);
+    const stock = parseInt(body['stock'] as string);
+    const cooking_type = body['cooking_type'] as string;
+    const category = body['category'] as string;
+    const file = body['image'] as File;
+
+    let imageUrl = '';
+
+    if (file && file.name) {
+  const fileName = `${Date.now()}_${file.name}`; 
+  
+  await c.env.mala.put(fileName, await file.arrayBuffer(), {
+    httpMetadata: { contentType: file.type }
+  });
+  
+  const r2BaseUrl = "https://pub-17c841dc329349f081a01a422b92e695.r2.dev";
+  imageUrl = `${r2BaseUrl}/${encodeURI(fileName)}`; 
+}
+
+    await c.env.project_mala_db.prepare(
+      "INSERT INTO products (image_url, name, price, stock, category, cooking_type) VALUES (?, ?, ?, ?, ?, ?)"
+    ).bind(imageUrl, name, price, stock, category, cooking_type).run();
+
+    return c.json({ success: true, message: 'เพิ่มเมนูสำเร็จ!' });
+  } catch (e: any) {
+    return c.json({ error: 'Upload Failed', message: e.message }, 500);
+  }
+});
+
+
 app.patch('/api/products/:id', async (c) => {
   const id = c.req.param('id');
   try {
-    // ใช้ parseBody() เพื่อรับข้อมูลแบบ FormData เหมือนตอนเพิ่มเมนู
     const body = await c.req.parseBody();
     const name = body['name'] as string;
     const price = parseFloat(body['price'] as string);
@@ -38,22 +71,20 @@ app.patch('/api/products/:id', async (c) => {
     let imageUrlUpdateQuery = '';
     let params: any[] = [name, price, stock, category, cooking_type];
 
-    // ถ้ามีการอัปโหลดไฟล์รูปภาพใหม่เข้ามา ให้เอาไปเก็บใน R2 ก่อน
     if (file && file.name) {
       const fileName = `uploads/${Date.now()}_${file.name}`;
       await c.env.mala.put(fileName, await file.arrayBuffer(), {
         httpMetadata: { contentType: file.type }
       });
-      const imageUrl = `http://127.0.0.1:8787/${fileName}`;
       
-      // เพิ่มคำสั่งให้ไปอัปเดตคอลัมน์ image_url ด้วย
+      const imageUrl = `https://pub-17c841dc329349f081a01a422b92e695.r2.dev/${encodeURI(fileName)}`; 
+      
       imageUrlUpdateQuery = ', image_url = ?';
       params.push(imageUrl);
     }
 
-    params.push(id); // ใส่ id ต่อท้ายสำหรับ WHERE
+    params.push(id); 
 
-    // อัปเดตข้อมูลลงฐานข้อมูล
     await c.env.project_mala_db.prepare(
       `UPDATE products SET name = ?, price = ?, stock = ?, category = ?, cooking_type = ?${imageUrlUpdateQuery} WHERE id = ?`
     ).bind(...params).run();
@@ -64,86 +95,30 @@ app.patch('/api/products/:id', async (c) => {
   }
 });
 
-// === เพิ่ม API สำหรับ Soft Delete เมนู ===
-app.patch('/api/products/:id/delete', async (c) => {
-  const id = c.req.param('id')
-  
+app.delete('/api/products/:id', async (c) => {
+  const id = c.req.param('id');
   try {
     await c.env.project_mala_db.prepare(
-      'UPDATE products SET is_deleted = 1 WHERE id = ?'
-    ).bind(id).run()
-    
-    return c.json({ success: true, message: 'ลบเมนูสำเร็จ' })
+      'DELETE FROM products WHERE id = ?'
+    ).bind(id).run();
+    return c.json({ success: true, message: 'ลบเมนูสำเร็จ' });
   } catch (e: any) {
-    return c.json({ error: 'Delete Failed', message: e.message }, 500)
-  }
-})
-
-// ดึงข้อมูลคิวอาหาร (ออเดอร์ที่ยังไม่จ่ายเงิน/รอทำ)
-app.get('/api/orders/queue', async (c) => {
-  try {
-    const { results: orders } = await c.env.project_mala_db.prepare(
-      "SELECT * FROM orders WHERE status = 'unpaid' ORDER BY created_at ASC"
-    ).all();
-
-    const queueData = [];
-    for (const order of orders) {
-      const { results: items } = await c.env.project_mala_db.prepare(
-        "SELECT * FROM order_items WHERE order_id = ?"
-      ).bind(order.id).all();
-
-      queueData.push({
-        ...order,
-        items: items 
-      });
-    }
-
-    return c.json(queueData);
-  } catch (e: any) {
-    return c.json({ error: 'Database Error', message: e.message }, 500);
+    return c.json({ error: 'Delete Failed', message: e.message }, 500);
   }
 });
 
-// API สำหรับเปลี่ยนสถานะออเดอร์
-app.patch('/api/orders/:id/status', async (c) => {
-  const id = c.req.param('id')
-  const { status } = await c.req.json()
-  
-  try {
-    await c.env.project_mala_db.prepare(
-      'UPDATE orders SET status = ? WHERE id = ?'
-    ).bind(status, id).run()
-    
-    return c.json({ success: true, message: `Order ${id} updated to ${status}` })
-  } catch (e: any) {
-    return c.json({ error: 'Update Failed', message: e.message }, 500)
+app.get('/uploads/:filename', async (c) => {
+  const filename = c.req.param('filename');
+  const object = await c.env.mala.get(`uploads/${filename}`);
+  if (!object) {
+    return c.text('Image not found', 404);
   }
-})
-
-// ดึงข้อมูลบิลรายโต๊ะ
-app.get('/api/orders/tables', async (c) => {
-  try {
-    const { results: orders } = await c.env.project_mala_db.prepare(
-      "SELECT * FROM orders WHERE status != 'paid' ORDER BY table_id ASC"
-    ).all();
-
-    const tableData = [];
-    for (const order of orders) {
-      const { results: items } = await c.env.project_mala_db.prepare(
-        "SELECT * FROM order_items WHERE order_id = ?"
-      ).bind(order.id).all();
-
-      tableData.push({
-        ...order,
-        items: items
-      });
-    }
-
-    return c.json(tableData);
-  } catch (e: any) {
-    return c.json({ error: 'Database Error', message: e.message }, 500);
-  }
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('etag', object.httpEtag);
+  return new Response(object.body, { headers });
 });
+
 
 app.post('/api/orders', async (c) => {
   try {
@@ -170,7 +145,7 @@ app.post('/api/orders', async (c) => {
       ).bind(
         order_id, 
         item.name, 
-        item.typeAddedAs, 
+        item.typeAddedAs || 'boiled', 
         item.quantity, 
         item.price * item.quantity
       ).run();
@@ -179,6 +154,44 @@ app.post('/api/orders', async (c) => {
     return c.json({ success: true, order_id: order_id, message: "สร้างออเดอร์สำเร็จ!" });
   } catch (e: any) {
     return c.json({ error: 'Create Order Failed', message: e.message }, 500);
+  }
+});
+
+app.get('/api/orders/queue', async (c) => {
+  try {
+    const { results: orders } = await c.env.project_mala_db.prepare(
+      "SELECT * FROM orders WHERE status = 'unpaid' ORDER BY created_at ASC"
+    ).all();
+
+    const queueData = [];
+    for (const order of orders) {
+      const { results: items } = await c.env.project_mala_db.prepare(
+        "SELECT * FROM order_items WHERE order_id = ?"
+      ).bind(order.id).all();
+      queueData.push({ ...order, items: items });
+    }
+    return c.json(queueData);
+  } catch (e: any) {
+    return c.json({ error: 'Database Error', message: e.message }, 500);
+  }
+});
+
+app.get('/api/orders/tables', async (c) => {
+  try {
+    const { results: orders } = await c.env.project_mala_db.prepare(
+      "SELECT * FROM orders WHERE status != 'paid' ORDER BY table_id ASC"
+    ).all();
+
+    const tableData = [];
+    for (const order of orders) {
+      const { results: items } = await c.env.project_mala_db.prepare(
+        "SELECT * FROM order_items WHERE order_id = ?"
+      ).bind(order.id).all();
+      tableData.push({ ...order, items: items });
+    }
+    return c.json(tableData);
+  } catch (e: any) {
+    return c.json({ error: 'Database Error', message: e.message }, 500);
   }
 });
 
@@ -194,128 +207,26 @@ app.get('/api/orders/table/:table_id', async (c) => {
       const { results: items } = await c.env.project_mala_db.prepare(
         "SELECT * FROM order_items WHERE order_id = ?"
       ).bind(order.id).all();
-
       tableData.push({ ...order, items });
     }
-
     return c.json(tableData);
   } catch (e: any) {
     return c.json({ error: 'Database Error', message: e.message }, 500);
   }
 });
 
-// API สำหรับเพิ่มเมนูใหม่ (รับข้อมูลแบบ multipart/form-data)
-app.post('/api/products', async (c) => {
-  try {
-    // 1. รับข้อมูลจาก Frontend
-    const body = await c.req.parseBody();
-    const name = body['name'] as string;
-    const price = parseFloat(body['price'] as string);
-    const stock = parseInt(body['stock'] as string);
-    const cooking_type = body['cooking_type'] as string;
-    const category = body['category'] as string;
-    const file = body['image'] as File;
-
-    let imageUrl = '';
-
-   // ถ้ามีรูปภาพแนบมา ให้เอาไปเก็บในคลัง R2
-    if (file && file.name) {
-      const fileName = `uploads/${Date.now()}_${file.name}`;
-      
-      await c.env.mala.put(fileName, await file.arrayBuffer(), {
-        httpMetadata: { contentType: file.type }
-      });
-
-      // 🌟 แก้ไขบรรทัดนี้: เปลี่ยนให้ดึงรูปจากเซิร์ฟเวอร์ Local ของเราเอง
-      imageUrl = `http://127.0.0.1:8787/${fileName}`; 
-    }
-
-    // 3. บันทึกข้อมูลลงฐานข้อมูล D1
-    await c.env.project_mala_db.prepare(
-      "INSERT INTO products (image_url, name, price, stock, category, cooking_type) VALUES (?, ?, ?, ?, ?, ?)"
-    ).bind(imageUrl, name, price, stock, category, cooking_type).run();
-
-    return c.json({ success: true, message: 'เพิ่มเมนูสำเร็จ!' });
-
-  } catch (e: any) {
-    return c.json({ error: 'Upload Failed', message: e.message }, 500);
-  }
-});
-
-// 🌟 เพิ่ม API ใหม่: สำหรับเปิดดูรูปภาพที่อัปโหลดไว้
-app.get('/uploads/:filename', async (c) => {
-  const filename = c.req.param('filename');
+app.patch('/api/orders/:id/status', async (c) => {
+  const id = c.req.param('id')
+  const { status } = await c.req.json()
   
-  // ไปค้นหาไฟล์รูปในคลัง R2
-  const object = await c.env.mala.get(`uploads/${filename}`);
-
-  if (!object) {
-    return c.text('Image not found', 404);
-  }
-
-  // เซ็ต Header เพื่อบอกให้เบราว์เซอร์รู้ว่านี่คือไฟล์รูปภาพ
-  const headers = new Headers();
-  object.writeHttpMetadata(headers);
-  headers.set('etag', object.httpEtag);
-
-  return new Response(object.body, { headers });
-});
-
-// 🌟 เพิ่ม API ใหม่: สำหรับเปิดดูรูปภาพที่อัปโหลดไว้
-app.get('/uploads/:filename', async (c) => {
-  const filename = c.req.param('filename');
-  
-  // ไปค้นหาไฟล์รูปในคลัง R2
-  const object = await c.env.mala.get(`uploads/${filename}`);
-
-  if (!object) {
-    return c.text('Image not found', 404);
-  }
-
-  // เซ็ต Header เพื่อบอกให้เบราว์เซอร์รู้ว่านี่คือไฟล์รูปภาพ
-  const headers = new Headers();
-  object.writeHttpMetadata(headers);
-  headers.set('etag', object.httpEtag);
-
-  return new Response(object.body, { headers });
-});
-
-app.delete('/api/products/:id', async (c) => {
-  const id = c.req.param('id');
   try {
     await c.env.project_mala_db.prepare(
-      'DELETE FROM products WHERE id = ?'
-    ).bind(id).run();
-    
-    return c.json({ success: true, message: 'ลบเมนูสำเร็จ' });
+      'UPDATE orders SET status = ? WHERE id = ?'
+    ).bind(status, id).run()
+    return c.json({ success: true, message: `Order ${id} updated to ${status}` })
   } catch (e: any) {
-    return c.json({ error: 'Delete Failed', message: e.message }, 500);
+    return c.json({ error: 'Update Failed', message: e.message }, 500)
   }
-});
-
-// ==========================================
-// 2. API สำหรับ "แก้ไข" เมนู (PATCH)
-// ==========================================
-app.patch('/api/products/:id', async (c) => {
-  const id = c.req.param('id');
-  try {
-    const body = await c.req.json();
-    
-    await c.env.project_mala_db.prepare(
-      'UPDATE products SET name = ?, price = ?, stock = ?, category = ?, cooking_type = ? WHERE id = ?'
-    ).bind(
-      body.name, 
-      body.price, 
-      body.stock || 0, 
-      body.category, 
-      body.cooking_type, 
-      id
-    ).run();
-    
-    return c.json({ success: true, message: 'อัปเดตข้อมูลสำเร็จ' });
-  } catch (e: any) {
-    return c.json({ error: 'Update Failed', message: e.message }, 500);
-  }
-});
+})
 
 export default app
