@@ -13,7 +13,8 @@ CREATE TABLE products (
     price REAL NOT NULL,
     stock INTEGER DEFAULT 0,
     category TEXT,
-    cooking_type TEXT
+    cooking_type TEXT,
+    is_deleted INTEGER DEFAULT 0 -- เพิ่มตรงนี้
 );
 
 CREATE TABLE orders (

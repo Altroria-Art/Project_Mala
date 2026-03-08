@@ -64,12 +64,43 @@
             </div>
           </div>
           <div class="item-actions">
-            <button class="edit-btn">แก้ไข</button>
-            <button class="delete-btn">ลบ</button>
+            <button class="edit-btn" @click="openEditModal(item)">แก้ไข</button>
+            <button class="delete-btn" @click="confirmDelete(item.id)">ลบ</button>
           </div>
         </div>
       </div>
     </section>
+
+    <div v-if="editingProduct" class="modal-overlay">
+      <div class="modal-content">
+        <h2>แก้ไขเมนู</h2>
+        <div class="form-grid">
+          <input type="text" v-model="editingProduct.image_url" placeholder="URL รูปภาพ (ชั่วคราว)" class="input-field" style="width: 100%;" />
+          <input type="text" v-model="editingProduct.name" placeholder="ชื่อเมนู" class="input-field" />
+          <input type="number" v-model="editingProduct.price" placeholder="ราคา" class="input-field" />
+          <input type="number" v-model="editingProduct.stock" placeholder="จำนวน" class="input-field" />
+          
+          <select v-model="editingProduct.cooking_type" class="select-field">
+            <option value="boiled">ต้ม</option>
+            <option value="grilled">ย่าง</option>
+            <option value="ready">พร้อมทาน</option>
+          </select>
+          
+          <select v-model="editingProduct.category" class="select-field">
+            <option value="Meat">เนื้อสัตว์</option>
+            <option value="vegetable">ผัก</option>
+            <option value="Appetizer">ของกินเล่น</option>
+            <option value="Others">อื่นๆ</option>
+            <option value="Beverage">เครื่องดื่ม</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button class="cancel-btn" @click="editingProduct = null">ยกเลิก</button>
+          <button class="save-btn" @click="saveEditProduct">บันทึก</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -85,8 +116,8 @@ const newProduct = ref({
 });
 
 const previewImage = ref(null);
-
 const products = ref([]);
+const editingProduct = ref(null); // เพิ่มตัวแปรเก็บสถานะแก้ไข
 
 const fetchProducts = async () => {
   try {
@@ -113,9 +144,52 @@ const onFileChange = (e) => {
 
 const saveProduct = () => {
   if (!newProduct.value.name) return alert('กรุณาใส่ชื่อเมนู');
-
   console.log('บันทึกเมนู:', newProduct.value);
   alert('บันทึกสำเร็จ!');
+};
+
+// --- ฟังก์ชันสำหรับ Edit และ Delete ---
+const openEditModal = (item) => {
+  editingProduct.value = { ...item };
+};
+
+const saveEditProduct = async () => {
+  if (!editingProduct.value.name) return alert('กรุณาใส่ชื่อเมนู');
+
+  try {
+    const response = await fetch(`http://127.0.0.1:8787/api/products/${editingProduct.value.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editingProduct.value)
+    });
+
+    if (!response.ok) throw new Error('Failed to update product');
+    
+    alert('บันทึกการแก้ไขสำเร็จ!');
+    editingProduct.value = null; // ปิด Modal
+    fetchProducts(); // โหลดข้อมูลใหม่
+  } catch (error) {
+    console.error("🚨 แก้ไขข้อมูลล้มเหลว:", error);
+    alert('เกิดข้อผิดพลาดในการแก้ไข');
+  }
+};
+
+const confirmDelete = async (id) => {
+  if (!confirm('คุณแน่ใจหรือไม่ว่าจะลบเมนูนี้?')) return;
+
+  try {
+    const response = await fetch(`http://127.0.0.1:8787/api/products/${id}/delete`, {
+      method: 'PATCH'
+    });
+
+    if (!response.ok) throw new Error('Failed to delete product');
+    
+    alert('ลบเมนูสำเร็จ!');
+    fetchProducts(); // โหลดข้อมูลใหม่หลังจากลบ (อันที่ลบจะหายไป)
+  } catch (error) {
+    console.error("🚨 ลบเมนูล้มเหลว:", error);
+    alert('เกิดข้อผิดพลาดในการลบ');
+  }
 };
 </script>
 
@@ -263,4 +337,49 @@ const saveProduct = () => {
 
 .edit-btn { background: #4b5563; color: white; }
 .delete-btn { background: #fee2e2; color: #ef4444; }
+
+/* === เพิ่ม CSS ของ Modal === */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.cancel-btn {
+  background: #f3f4f6;
+  color: #4b5563;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+}
 </style>

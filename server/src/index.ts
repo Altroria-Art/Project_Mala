@@ -15,22 +15,62 @@ app.get('/', (c) => {
 
 app.get('/api/products', async (c) => {
   try {
-    const { results } = await c.env.project_mala_db.prepare('SELECT * FROM products').all()
+    // ดึงเฉพาะเมนูที่ยังไม่ถูกลบ
+    const { results } = await c.env.project_mala_db.prepare('SELECT * FROM products WHERE is_deleted = 0').all()
     return c.json(results)
   } catch (e: any) {
     return c.json({ error: 'Database Error', message: e.message }, 500)
   }
 })
 
+// === เพิ่ม API สำหรับอัปเดตข้อมูลเมนู ===
+app.patch('/api/products/:id', async (c) => {
+  const id = c.req.param('id')
+  const body = await c.req.json()
+  
+  try {
+    await c.env.project_mala_db.prepare(
+      `UPDATE products 
+       SET name = ?, price = ?, stock = ?, category = ?, cooking_type = ?, image_url = ?
+       WHERE id = ?`
+    ).bind(
+      body.name, 
+      body.price, 
+      body.stock, 
+      body.category, 
+      body.cooking_type, 
+      body.image_url, 
+      id
+    ).run()
+    
+    return c.json({ success: true, message: 'อัปเดตข้อมูลสำเร็จ' })
+  } catch (e: any) {
+    return c.json({ error: 'Update Failed', message: e.message }, 500)
+  }
+})
+
+// === เพิ่ม API สำหรับ Soft Delete เมนู ===
+app.patch('/api/products/:id/delete', async (c) => {
+  const id = c.req.param('id')
+  
+  try {
+    await c.env.project_mala_db.prepare(
+      'UPDATE products SET is_deleted = 1 WHERE id = ?'
+    ).bind(id).run()
+    
+    return c.json({ success: true, message: 'ลบเมนูสำเร็จ' })
+  } catch (e: any) {
+    return c.json({ error: 'Delete Failed', message: e.message }, 500)
+  }
+})
+
 // ดึงข้อมูลคิวอาหาร (ออเดอร์ที่ยังไม่จ่ายเงิน/รอทำ)
 app.get('/api/orders/queue', async (c) => {
   try {
-    // 1. ดึงข้อมูลออเดอร์หลัก
     const { results: orders } = await c.env.project_mala_db.prepare(
       "SELECT * FROM orders WHERE status = 'unpaid' ORDER BY created_at ASC"
     ).all();
 
-    // 2. ดึงรายการอาหารของแต่ละออเดอร์ไปใส่ไว้ด้วยกัน
     const queueData = [];
     for (const order of orders) {
       const { results: items } = await c.env.project_mala_db.prepare(
@@ -39,7 +79,7 @@ app.get('/api/orders/queue', async (c) => {
 
       queueData.push({
         ...order,
-        items: items // แนบรายการอาหารไปกับออเดอร์
+        items: items 
       });
     }
 
@@ -49,7 +89,7 @@ app.get('/api/orders/queue', async (c) => {
   }
 });
 
-// API สำหรับเปลี่ยนสถานะออเดอร์ (เช่น จาก unpaid -> cooking)
+// API สำหรับเปลี่ยนสถานะออเดอร์
 app.patch('/api/orders/:id/status', async (c) => {
   const id = c.req.param('id')
   const { status } = await c.req.json()
@@ -65,10 +105,9 @@ app.patch('/api/orders/:id/status', async (c) => {
   }
 })
 
-// ดึงข้อมูลบิลรายโต๊ะ (ออเดอร์ที่ยังไม่ได้จ่ายเงินทั้งหมด เช่น unpaid, cooking, served)
+// ดึงข้อมูลบิลรายโต๊ะ
 app.get('/api/orders/tables', async (c) => {
   try {
-    // ดึงออเดอร์ทั้งหมดที่สถานะไม่ใช่ 'paid' (จ่ายแล้ว)
     const { results: orders } = await c.env.project_mala_db.prepare(
       "SELECT * FROM orders WHERE status != 'paid' ORDER BY table_id ASC"
     ).all();
@@ -96,7 +135,6 @@ app.post('/api/orders', async (c) => {
     const body = await c.req.json();
     const { table_id, items, total_price, soup_type, spicy_boiled, spicy_grilled } = body;
 
-    // 1. บันทึกข้อมูลลงตาราง orders และดึง id ที่เพิ่งสร้างกลับมา (RETURNING id)
     const orderResult = await c.env.project_mala_db.prepare(
       `INSERT INTO orders (table_id, soup_type, spicy_boiled, spicy_grilled, total_price, status) 
        VALUES (?, ?, ?, ?, ?, 'unpaid') RETURNING id`
@@ -110,7 +148,6 @@ app.post('/api/orders', async (c) => {
 
     const order_id = orderResult.id;
 
-    // 2. บันทึกรายการอาหารแต่ละรายการลงตาราง order_items
     for (const item of items) {
       await c.env.project_mala_db.prepare(
         `INSERT INTO order_items (order_id, product_name, cooking_type, quantity, subtotal_price) 
@@ -118,7 +155,7 @@ app.post('/api/orders', async (c) => {
       ).bind(
         order_id, 
         item.name, 
-        item.typeAddedAs, // 'boil', 'grill', หรือ 'ready'
+        item.typeAddedAs, 
         item.quantity, 
         item.price * item.quantity
       ).run();
@@ -133,14 +170,12 @@ app.post('/api/orders', async (c) => {
 app.get('/api/orders/table/:table_id', async (c) => {
   const table_id = c.req.param('table_id');
   try {
-    // หาออเดอร์ของโต๊ะนี้ ที่สถานะไม่ใช่ paid
     const { results: orders } = await c.env.project_mala_db.prepare(
       "SELECT * FROM orders WHERE table_id = ? AND status != 'paid' ORDER BY created_at ASC"
     ).bind(table_id).all();
 
     const tableData = [];
     for (const order of orders) {
-      // ดึงรายการอาหารของแต่ละบิล
       const { results: items } = await c.env.project_mala_db.prepare(
         "SELECT * FROM order_items WHERE order_id = ?"
       ).bind(order.id).all();
@@ -153,4 +188,5 @@ app.get('/api/orders/table/:table_id', async (c) => {
     return c.json({ error: 'Database Error', message: e.message }, 500);
   }
 });
+
 export default app
