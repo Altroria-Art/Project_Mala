@@ -18,8 +18,9 @@ export const menuService = {
 
         let category = item.category || 'Others';
 
+        // 🌟 แก้ไขตรงนี้: ให้ "ข้าวสวย" ไปอยู่ในหมวด 'Rice' เพื่อให้ตรงกับปุ่มในหน้าเว็บ
         if (item.name.includes('ข้าวสวย')) {
-          category = 'Beverage';
+          category = 'Rice';
         }
 
         return {
