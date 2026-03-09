@@ -37,19 +37,24 @@
         </button>
       </div>
 
-      <div class="category-scroll">
+      <div class="category-scroll" v-if="cookType !== 'ready'">
         <button class="category-btn" :class="{ active: currentCategory === 'all' }" @click="currentCategory = 'all'">ทั้งหมด</button>
         <button class="category-btn" :class="{ active: currentCategory === 'Meat' }" @click="currentCategory = 'Meat'">เนื้อสัตว์</button>
         <button class="category-btn" :class="{ active: currentCategory === 'Appetizer' }" @click="currentCategory = 'Appetizer'">ทานเล่น</button>
         <button class="category-btn" :class="{ active: currentCategory === 'vegetable' }" @click="currentCategory = 'vegetable'">ผัก</button>
-        <button class="category-btn" :class="{ active: currentCategory === 'Others' }" @click="currentCategory = 'Others'">เส้น</button>
-        <button class="category-btn" :class="{ active: currentCategory === 'Beverage' }" @click="currentCategory = 'Beverage'">ข้าว/เครื่องดื่ม</button>
+        <button v-if="cookType === 'boil'" class="category-btn" :class="{ active: currentCategory === 'Others' }" @click="currentCategory = 'Others'">เส้น</button>
+      </div>
+
+      <div class="category-scroll" v-if="cookType === 'ready'">
+        <button class="category-btn" :class="{ active: currentCategory === 'all' }" @click="currentCategory = 'all'">ทั้งหมด</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'Rice' }" @click="currentCategory = 'Rice'">ข้าว</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'Beverage' }" @click="currentCategory = 'Beverage'">เครื่องดื่ม</button>
       </div>
 
       <ProductGrid :current-cook-type="cookType" :current-category="currentCategory" />
     </main>
 
-    <div class="bottom-cart-bar">
+    <div class="bottom-cart-bar" v-if="cartStore.totalItems > 0">
       <div class="cart-info">
         <span class="total-price">ยอดรวม: ฿ {{ cartStore.totalPrice }}</span>
       </div>
@@ -91,13 +96,7 @@ const closeBill = () => { isBillOpen.value = false; };
 
 const changeMode = (mode) => {
   cookType.value = mode;
-
-  if (mode === 'ready') {
-    currentCategory.value = 'all';
-  } 
-  else if (currentCategory.value === 'Beverage') {
-    currentCategory.value = 'all';
-  }
+  currentCategory.value = 'all'; 
 };
 </script>
 
@@ -128,35 +127,18 @@ const changeMode = (mode) => {
 .cart-info { display: flex; align-items: center; }
 .total-price { font-size: 1.1rem; font-weight: bold; color: #333; }
 .checkout-btn { background-color: #e53935; color: white; border: none; padding: 12px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-.cook-btn, .category-btn, .checkout-btn, .icon-btn {
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
-}
-.cook-btn:active, .category-btn:active, .checkout-btn:active, .icon-btn:active {
-  transform: scale(0.92);
-}
-.cook-btn.active, .category-btn.active {
-  box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2);
-}
-.brand-title {
-  margin: 0;
-  font-family: 'Permanent Marker', cursive; 
-  font-size: 1.8rem;
-  font-weight: 400;  
-  color: #e53935; 
-  line-height: 1.1;
-  letter-spacing: 1px;
-  text-shadow: 2px 2px 0px #000; 
-  transform: rotate(-2deg); 
-}
+.cook-btn, .category-btn, .checkout-btn, .icon-btn { transition: transform 0.1s ease, box-shadow 0.2s ease; }
+.cook-btn:active, .category-btn:active, .checkout-btn:active, .icon-btn:active { transform: scale(0.92); }
+.cook-btn.active, .category-btn.active { box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2); }
+.brand-title { margin: 0; font-family: 'Permanent Marker', cursive; font-size: 1.8rem; font-weight: 400; color: #e53935; line-height: 1.1; letter-spacing: 1px; text-shadow: 2px 2px 0px #000; transform: rotate(-2deg); }
+.brand-subtitle { margin: 0; margin-top: 4px; font-family: 'Prompt', sans-serif; font-size: 0.6rem; color: #333; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
 
-.brand-subtitle {
-  margin: 0;
-  margin-top: 4px;
-  font-family: 'Prompt', sans-serif; 
-  font-size: 0.6rem;
-  color: #333;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+/* 🌟 ทำให้การเด้งขึ้นของแถบตะกร้าดูสมูทขึ้น (เผื่อคุณชอบ) 🌟 */
+.bottom-cart-bar {
+  animation: slideUpFade 0.3s ease-out forwards;
+}
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 </style>

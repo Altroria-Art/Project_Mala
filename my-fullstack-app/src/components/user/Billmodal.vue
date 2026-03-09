@@ -7,7 +7,12 @@
           <button class="icon-btn back-btn" @click="$emit('close')">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
           </button>
-          <h2 class="header-title">ประวัติการสั่งอาหาร</h2>
+          
+          <div class="header-center">
+            <h2 class="header-title">ประวัติการสั่งอาหาร</h2>
+            <span class="table-badge">โต๊ะ {{ tableNumber }}</span>
+          </div>
+
           <div style="width: 40px;"></div> 
         </header>
 
@@ -67,11 +72,15 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import { useCartStore } from '../../stores/cartStore';
 
 const cartStore = useCartStore();
 
 defineEmits(['close']);
+
+// 🌟 ดึงเบอร์โต๊ะจากเครื่องลูกค้า (ถ้าไม่มีให้ตั้งเป็น 1 ไว้ก่อน)
+const tableNumber = ref(localStorage.getItem('my_table_id') || '1');
 
 // ฟังก์ชันแปลงเวลาให้สวยงาม (เช่น 14:30 น.)
 const formatTime = (dateObj) => {
@@ -98,40 +107,17 @@ const formatGrillOption = (optionStr) => {
 </script>
 
 <style scoped>
-/* แก้ไขความสูงเพื่อแก้บัคมือถือตรงนี้ครับ */
-.modal-overlay { 
-  position: fixed; 
-  top: 0; 
-  left: 0; 
-  width: 100%; 
-  height: 100vh; /* เผื่อเบราว์เซอร์เก่า */
-  height: 100dvh; /* แก้บัคหน้าจอยืดในมือถือยุคใหม่ */
-  background-color: rgba(0, 0, 0, 0.5); 
-  display: flex; 
-  justify-content: center; 
-  align-items: flex-end; 
-  z-index: 9999; 
-}
-
-.modal-container { 
-  position: relative; 
-  width: 100%; 
-  max-width: 480px; 
-  height: 100%; /* ให้ความสูงปรับตามเนื้อหา แต่ไม่เกิน max-height */
-  max-height: 85vh; 
-  max-height: 85dvh; /* บังคับไม่ให้ป๊อปอัปดันทะลุขอบบน */
-  background-color: #f7f8fa; 
-  border-radius: 20px 20px 0 0; 
-  display: flex; 
-  flex-direction: column; 
-  overflow: hidden; 
-  animation: slideUp 0.3s ease-out; 
-}
-
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; height: 100dvh; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: flex-end; z-index: 9999; }
+.modal-container { position: relative; width: 100%; max-width: 480px; height: 100%; max-height: 85vh; max-height: 85dvh; background-color: #f7f8fa; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease-out; }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
-.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px; background-color: #fff; border-bottom: 1px solid #f0f0f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background-color: #fff; border-bottom: 1px solid #f0f0f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
+
+/* 🌟 จัดแต่งหัวบิลและป้ายเบอร์โต๊ะ 🌟 */
+.header-center { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .header-title { margin: 0; font-size: 1.1rem; font-weight: bold; color: #333; }
+.table-badge { background-color: #c62828; color: #fff; padding: 2px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(198, 40, 40, 0.2); }
+
 .icon-btn { background: none; border: none; cursor: pointer; color: #333; display: flex; align-items: center; justify-content: center; padding: 8px; }
 
 .modal-body { flex: 1; overflow-y: auto; padding: 16px; }
