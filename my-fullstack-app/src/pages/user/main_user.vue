@@ -33,15 +33,17 @@
           <span class="emoji">🔥</span><span class="font-bold">แบบย่าง</span>
         </button>
         <button class="cook-btn" :class="{ active: cookType === 'ready' }" @click="changeMode('ready')">
-          <span class="emoji">🥤</span><span class="font-bold">พร้อมทาน</span>
+          <span class="emoji">🥤</span><span class="font-bold">ข้าว/เครื่องดื่ม</span>
         </button>
       </div>
 
       <div class="category-scroll">
         <button class="category-btn" :class="{ active: currentCategory === 'all' }" @click="currentCategory = 'all'">ทั้งหมด</button>
-        <button class="category-btn" :class="{ active: currentCategory === 'meat' }" @click="currentCategory = 'meat'">เนื้อ</button>
-        <button class="category-btn" :class="{ active: currentCategory === 'veg' }" @click="currentCategory = 'veg'">ผัก</button>
-        <button class="category-btn" :class="{ active: currentCategory === 'drink' }" @click="currentCategory = 'drink'">เครื่องดื่ม/ข้าว</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'Meat' }" @click="currentCategory = 'Meat'">เนื้อสัตว์</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'Appetizer' }" @click="currentCategory = 'Appetizer'">ทานเล่น</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'vegetable' }" @click="currentCategory = 'vegetable'">ผัก</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'Others' }" @click="currentCategory = 'Others'">เส้น</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'Beverage' }" @click="currentCategory = 'Beverage'">ข้าว/เครื่องดื่ม</button>
       </div>
 
       <ProductGrid :current-cook-type="cookType" :current-category="currentCategory" />
@@ -61,7 +63,6 @@
 </template>
 
 <script setup>
-// เพิ่ม onMounted เข้ามาที่นี่
 import { ref, onMounted } from 'vue'; 
 import ProductGrid from '../../components/user/ProductGrid.vue';
 import CartModal from '../../components/user/CartModal.vue'; 
@@ -74,12 +75,9 @@ const isBillOpen = ref(false);
 const cookType = ref('boil'); 
 const currentCategory = ref('all'); 
 
-// ดึงข้อมูลบิลเมื่อโหลดหน้าเว็บ
 onMounted(() => {
-  // ดึงทันทีที่โหลดเสร็จ 1 ครั้ง
   cartStore.syncBills();
   
-  // ให้ดึงข้อมูลเช็คบิลใหม่ทุกๆ 10 วินาที
   setInterval(() => {
     cartStore.syncBills();
   }, 10000);
@@ -97,7 +95,7 @@ const changeMode = (mode) => {
   if (mode === 'ready') {
     currentCategory.value = 'all';
   } 
-  else if (currentCategory.value === 'drink') {
+  else if (currentCategory.value === 'Beverage') {
     currentCategory.value = 'all';
   }
 };
