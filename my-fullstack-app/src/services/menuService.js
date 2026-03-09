@@ -16,20 +16,18 @@ export const menuService = {
         if (cookType === 'boiled') cookType = 'boil';
         if (cookType === 'grilled') cookType = 'grill';
 
-        let rawCat = item.category ? item.category.toLowerCase() : 'others';
-        let finalCat = 'other';
-        
-        if (rawCat === 'meat') finalCat = 'meat';
-        if (rawCat === 'vegetable') finalCat = 'veg';
-        if (rawCat === 'beverage') finalCat = 'drink';
-        if (rawCat === 'appetizer' || rawCat === 'others') finalCat = 'other';
+        let category = item.category || 'Others';
+
+        if (item.name.includes('ข้าวสวย')) {
+          category = 'Beverage';
+        }
 
         return {
           id: item.id,
           name: item.name,
           price: item.price,
           image: item.image_url,
-          category: finalCat,
+          category: category, 
           allowedCookTypes: [cookType] 
         };
       });
