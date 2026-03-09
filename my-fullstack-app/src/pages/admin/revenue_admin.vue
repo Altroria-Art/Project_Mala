@@ -1,169 +1,211 @@
 <template>
-  <div class="revenue-container">
-    <section class="stats-grid">
-      <div class="stat-card day">
-        <span class="stat-label">รายได้รายวัน</span>
-        <h2 class="stat-value">฿{{ stats.daily.toLocaleString() }}</h2>
-        <span class="stat-compare">เทียบกับเมื่อวาน +5%</span>
+  <div class="revenue-dashboard">
+    <div class="header-section">
+      <div class="date-badge">
+        <span class="icon">📅</span> {{ formatDateTh(filterDate) }}
       </div>
-      <div class="stat-card week">
-        <span class="stat-label">รายได้รายอาทิตย์</span>
-        <h2 class="stat-value">฿{{ stats.weekly.toLocaleString() }}</h2>
-        <span class="stat-compare">7 วันที่ผ่านมา</span>
-      </div>
-      <div class="stat-card month">
-        <span class="stat-label">รายได้รายเดือน</span>
-        <h2 class="stat-value">฿{{ stats.monthly.toLocaleString() }}</h2>
-        <span class="stat-compare">กุมภาพันธ์ 2026</span>
-      </div>
-    </section>
+    </div>
 
-    <section class="history-section shadow-sm">
-      <div class="history-header">
-        <h2 class="section-title">ประวัติบิลย้อนหลัง</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="card-header">
+          <div class="icon-box blue">📈</div>
+          <div class="trend up">+12.5% จากเมื่อวาน</div>
+        </div>
+        <span class="label">ยอดขายวันนี้</span>
+        <h2 class="value">฿{{ summary.daily_amount.toLocaleString() }}</h2>
+        <p class="update">อัปเดตล่าสุดเมื่อ 1 นาทีที่แล้ว</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="card-header">
+          <div class="icon-box green">📄</div>
+        </div>
+        <span class="label">จำนวนบิลวันนี้</span>
+        <h2 class="value">{{ summary.daily_count }}</h2>
+        <p class="update">จำนวนบิลทั้งหมดที่ชำระแล้ว</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="card-header">
+          <div class="icon-box purple">💰</div>
+          <div class="trend up">+5.2% จากเดือนที่แล้ว</div>
+        </div>
+        <span class="label">ยอดขายเดือนนี้ (มี.ค.)</span>
+        <h2 class="value">฿{{ summary.monthly_amount.toLocaleString() }}</h2>
+        <p class="update">1 มี.ค. - 31 มี.ค. 2026</p>
+      </div>
+
+      <div class="stat-card">
+        <div class="card-header">
+          <div class="icon-box orange">📊</div>
+        </div>
+        <span class="label">ยอดขายเฉลี่ยต่อวัน</span>
+        <h2 class="value">฿{{ summary.avg_per_day.toLocaleString() }}</h2>
+        <p class="update">คำนวณจากยอดเดือนนี้</p>
+      </div>
+    </div>
+
+    <div class="content-card shadow-sm">
+      <div class="card-controls">
+        <div class="tab-group">
+          <button 
+            @click="viewMode = 'daily'" 
+            :class="['tab-btn', { active: viewMode === 'daily' }]"
+          >ประวัติบิลรายวัน</button>
+          <button 
+            @click="viewMode = 'items'" 
+            :class="['tab-btn', { active: viewMode === 'items' }]"
+          >สถิติวัตถุดิบรายวัน</button>
+          <button 
+            @click="viewMode = 'monthly'" 
+            :class="['tab-btn', { active: viewMode === 'monthly' }]"
+          >สรุปรายวัน (เดือนนี้)</button>
+        </div>
+
         <div class="filter-group">
+          <select v-if="viewMode === 'daily'" v-model="selectedTable" class="select-input">
+            <option value="all">ดูทุกโต๊ะ</option>
+            <option v-for="n in 5" :key="n" :value="n">โต๊ะ {{ n }}</option>
+          </select>
+          <select v-if="viewMode === 'items'" v-model="selectedCategory" class="select-input">
+            <option value="all">ดูทุกหมวดหมู่</option>
+            <option value="Meat">เนื้อสัตว์</option>
+            <option value="vegetable">ผัก</option>
+            <option value="Appetizer">ของกินเล่น</option>
+          </select>
           <input type="date" v-model="filterDate" class="date-input" />
-          <button class="export-btn">ส่งออกรายงาน</button>
         </div>
       </div>
 
-      <div class="table-wrapper">
-        <table class="history-table">
-          <thead>
-            <tr>
-              <th>เลขที่บิล</th>
-              <th>โต๊ะ</th>
-              <th>เวลา</th>
-              <th>รายการอาหาร</th>
-              <th>ยอดรวม</th>
-              <th>สถานะ</th>
-              <th>จัดการ</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="bill in billHistory" :key="bill.id">
-              <td class="bill-id">#{{ bill.billNo }}</td>
-              <td>โต๊ะ {{ bill.tableNo }}</td>
-              <td>{{ bill.time }}</td>
-              <td class="items-cell">
-                <span class="item-summary">{{ bill.itemsCount }} รายการ</span>
-              </td>
-              <td class="amount-cell">฿{{ bill.total.toLocaleString() }}</td>
-              <td><span class="status-tag paid">ชำระแล้ว</span></td>
-              <td>
-                <button class="detail-link" @click="viewDetail(bill)">ดูบิล</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <table v-if="viewMode === 'daily'" class="data-table">
+        <thead>
+          <tr>
+            <th>เวลา</th>
+            <th>เลขที่บิล</th>
+            <th>โต๊ะ</th>
+            <th class="text-right">ยอดเงิน (฿)</th>
+            <th class="text-center">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="bill in filteredHistory" :key="bill.id">
+            <td><span class="time-tag">🕒 {{ formatTime(bill.created_at) }}</span></td>
+            <td class="bold">INV-{{ bill.id }}</td>
+            <td>โต๊ะ {{ bill.table_id }}</td>
+            <td class="text-right bold">฿{{ bill.total_price.toLocaleString() }}</td>
+            <td class="text-center">
+              <button class="view-btn">ดูบิล</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table v-if="viewMode === 'items'" class="data-table">
+        <thead>
+          <tr>
+            <th>อันดับ</th>
+            <th>ชื่อวัตถุดิบ</th>
+            <th>หมวดหมู่</th>
+            <th class="text-center">จำนวนที่ขายได้</th>
+            <th class="text-right">ยอดเงินรวม (฿)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item, index) in itemsStats" :key="index">
+            <td class="text-center">{{ index + 1 }}</td>
+            <td class="bold">{{ item.name }}</td>
+            <td><span class="cat-tag">{{ item.category }}</span></td>
+            <td class="text-center">{{ item.quantity || 0 }}</td>
+            <td class="text-right bold">฿{{ (item.total || 0).toLocaleString() }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="card-footer">
+        <p>แสดง {{ filteredHistory.length }} รายการ</p>
+        <div class="page-nav">
+          <button class="nav-btn" disabled>ก่อนหน้า</button>
+          <button class="nav-btn active">1</button>
+          <button class="nav-btn">ถัดไป</button>
+        </div>
       </div>
-    </section>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 
-// ข้อมูลจำลองสถิติ
-const stats = ref({
-  daily: 4500,
-  weekly: 32000,
-  monthly: 125000
+const viewMode = ref('daily'); 
+const summary = ref({ daily_amount: 0, daily_count: 0, monthly_amount: 0, avg_per_day: 0 });
+const history = ref([]);
+const itemsStats = ref([]); 
+const filterDate = ref(new Date().toISOString().split('T')[0]);
+const selectedTable = ref('all');
+const selectedCategory = ref('all');
+
+const fetchData = async () => {
+  try {
+    const sumRes = await fetch('http://127.0.0.1:8787/api/revenue/summary');
+    summary.value = await sumRes.json();
+    
+    const histRes = await fetch(`http://127.0.0.1:8787/api/revenue/history?date=${filterDate.value}`);
+    history.value = await histRes.json();
+  } catch (e) {
+    console.error("API Error:", e);
+  }
+};
+
+const filteredHistory = computed(() => {
+  if (selectedTable.value === 'all') return history.value;
+  return history.value.filter(b => b.table_id == selectedTable.value);
 });
 
-const filterDate = ref(new Date().toISOString().substr(0, 10));
+watch(filterDate, fetchData);
 
-// ข้อมูลจำลองประวัติบิล
-const billHistory = ref([
-  { id: 101, billNo: '6901', tableNo: '01', time: '18:45', itemsCount: 12, total: 1550 },
-  { id: 102, billNo: '6902', tableNo: '03', time: '19:12', itemsCount: 5, total: 420 },
-  { id: 103, billNo: '6903', tableNo: '02', time: '19:30', itemsCount: 8, total: 890 },
-  { id: 104, billNo: '6904', tableNo: '05', time: '20:05', itemsCount: 15, total: 2100 },
-]);
+const formatTime = (s) => new Date(s).toLocaleTimeString('th-TH', { hour:'2-digit', minute:'2-digit' });
+const formatDateTh = (d) => new Date(d).toLocaleDateString('th-TH', { day:'numeric', month:'long', year:'numeric' });
 
-const viewDetail = (bill) => {
-  alert(`เปิดดูรายละเอียดบิล #${bill.billNo}`);
-};
+onMounted(fetchData);
 </script>
 
 <style scoped>
-.revenue-container {
-  max-width: 1100px;
-  margin: 0 auto;
-}
+.revenue-dashboard { padding: 2rem; background: transparent; min-height: 100vh; font-family: 'Inter', 'Kanit', sans-serif; }
 
-/* Stats Cards */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 25px;
-  margin-bottom: 40px;
-}
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+.stat-card { background: white; padding: 1.5rem; border-radius: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; }
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+.icon-box { padding: 0.5rem; border-radius: 0.75rem; font-size: 1.25rem; }
+.icon-box.blue { background: #eff6ff; }
+.icon-box.green { background: #f0fdf4; }
+.trend { font-size: 0.75rem; font-weight: 600; color: #10b981; }
+.label { color: #64748b; font-size: 0.875rem; font-weight: 500; }
+.value { font-size: 1.75rem; font-weight: 800; color: #1e293b; margin: 0.25rem 0; }
+.update { font-size: 0.75rem; color: #94a3b8; }
 
-.stat-card {
-  background: white;
-  padding: 30px;
-  border-radius: 20px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-  display: flex;
-  flex-direction: column;
-  border-bottom: 5px solid transparent;
-}
+.content-card { background: white; border-radius: 1.25rem; padding: 1.5rem; border: 1px solid #f1f5f9; }
+.card-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
 
-.stat-card.day { border-bottom-color: #f97316; }
-.stat-card.week { border-bottom-color: #3b82f6; }
-.stat-card.month { border-bottom-color: #10b981; }
+.tab-group { background: #f1f5f9; padding: 0.25rem; border-radius: 0.75rem; display: flex; gap: 0.25rem; }
+.tab-btn { padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; background: transparent; cursor: pointer; font-size: 0.875rem; font-weight: 500; color: #64748b; transition: 0.2s; }
+.tab-btn.active { background: white; color: #1e293b; shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-.stat-label { color: #718096; font-size: 14px; margin-bottom: 10px; }
-.stat-value { font-size: 32px; font-weight: 700; color: #1a202c; margin-bottom: 5px; }
-.stat-compare { font-size: 12px; color: #a0aec0; }
+.filter-group { display: flex; gap: 0.75rem; }
+.select-input, .date-input { padding: 0.5rem 0.75rem; border-radius: 0.6rem; border: 1px solid #e2e8f0; font-size: 0.875rem; outline: none; }
 
-/* History Table Section */
-.history-section {
-  background: white;
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { text-align: left; padding: 1rem; color: #94a3b8; font-size: 0.75rem; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
+.data-table td { padding: 1rem; border-bottom: 1px solid #f8fafc; font-size: 0.9rem; }
+.bold { font-weight: 700; color: #1e293b; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+.time-tag { background: #f8fafc; padding: 0.25rem 0.5rem; border-radius: 0.4rem; color: #64748b; }
+.cat-tag { background: #f1f5f9; padding: 0.2rem 0.5rem; border-radius: 0.4rem; font-size: 0.75rem; }
 
-.history-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-}
-
-.section-title { font-size: 20px; color: #2d3748; }
-
-.filter-group { display: flex; gap: 15px; }
-.date-input { padding: 8px 15px; border-radius: 8px; border: 1px solid #e2e8f0; }
-
-.export-btn {
-  background: #4a5568;
-  color: white;
-  border: none;
-  padding: 8px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-/* Table Design */
-.table-wrapper { overflow-x: auto; }
-.history-table { width: 100%; border-collapse: collapse; text-align: left; }
-.history-table th { padding: 15px; border-bottom: 2px solid #edf2f7; color: #718096; font-weight: 600; font-size: 14px; }
-.history-table td { padding: 18px 15px; border-bottom: 1px solid #edf2f7; font-size: 15px; color: #2d3748; }
-
-.bill-id { font-weight: 700; color: #f97316; }
-.amount-cell { font-weight: 700; }
-.status-tag.paid { background: #def7ec; color: #03543f; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: bold; }
-
-.detail-link {
-  color: #3b82f6;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-  text-decoration: underline;
-}
+.card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 1.5rem; font-size: 0.875rem; color: #64748b; }
+.page-nav { display: flex; gap: 0.5rem; }
+.nav-btn { padding: 0.4rem 0.8rem; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: white; cursor: pointer; }
+.nav-btn.active { background: #eff6ff; color: #3b82f6; border-color: #3b82f6; }
+.view-btn { color: #3b82f6; background: transparent; border: none; font-weight: 600; cursor: pointer; }
 </style>

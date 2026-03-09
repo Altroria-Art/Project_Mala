@@ -229,4 +229,46 @@ app.patch('/api/orders/:id/status', async (c) => {
   }
 })
 
+app.get('/api/revenue/summary', async (c) => {
+  try {
+    const today = await c.env.project_mala_db.prepare(
+      "SELECT SUM(total_price) as total FROM orders WHERE status = 'paid' AND date(created_at, 'localtime') = date('now', 'localtime')"
+    ).first();
+    
+    const countToday = await c.env.project_mala_db.prepare(
+      "SELECT COUNT(*) as count FROM orders WHERE status = 'paid' AND date(created_at, 'localtime') = date('now', 'localtime')"
+    ).first();
+
+    const monthly = await c.env.project_mala_db.prepare(
+      "SELECT SUM(total_price) as total FROM orders WHERE status = 'paid' AND strftime('%m', created_at) = strftime('%m', 'now')"
+    ).first();
+
+    return c.json({
+      daily_amount: today?.total || 0,
+      daily_count: countToday?.count || 0,
+      monthly_amount: monthly?.total || 0,
+      avg_per_day: (monthly?.total || 0) / 30 // คำนวณคร่าวๆ
+    });
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+// 2. ดึงประวัติบิลรายวัน (Table)
+app.get('/api/revenue/history', async (c) => {
+  const date = c.req.query('date') || 'now';
+  try {
+    const { results } = await c.env.project_mala_db.prepare(
+      `SELECT id, table_id, created_at, total_price 
+       FROM orders 
+       WHERE status = 'paid' AND date(created_at, 'localtime') = date(?, 'localtime')
+       ORDER BY created_at DESC`
+    ).bind(date === 'now' ? 'now' : date).all();
+    
+    return c.json(results);
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
 export default app
