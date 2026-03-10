@@ -39,16 +39,16 @@
 
       <div class="category-scroll" v-if="cookType !== 'ready'">
         <button class="category-btn" :class="{ active: currentCategory === 'all' }" @click="currentCategory = 'all'">ทั้งหมด</button>
-        <button class="category-btn" :class="{ active: currentCategory === 'Meat' }" @click="currentCategory = 'Meat'">เนื้อสัตว์</button>
-        <button class="category-btn" :class="{ active: currentCategory === 'Appetizer' }" @click="currentCategory = 'Appetizer'">ทานเล่น</button>
-        <button class="category-btn" :class="{ active: currentCategory === 'vegetable' }" @click="currentCategory = 'vegetable'">ผัก</button>
-        <button v-if="cookType === 'boil'" class="category-btn" :class="{ active: currentCategory === 'Others' }" @click="currentCategory = 'Others'">เส้น</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'เนื้อสัตว์' }" @click="currentCategory = 'เนื้อสัตว์'">เนื้อสัตว์</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'ของทานเล่น' }" @click="currentCategory = 'ของทานเล่น'">ทานเล่น</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'ผัก' }" @click="currentCategory = 'ผัก'">ผัก</button>
+        <button v-if="cookType === 'boil'" class="category-btn" :class="{ active: currentCategory === 'เส้น' }" @click="currentCategory = 'เส้น'">เส้น</button>
       </div>
 
       <div class="category-scroll" v-if="cookType === 'ready'">
         <button class="category-btn" :class="{ active: currentCategory === 'all' }" @click="currentCategory = 'all'">ทั้งหมด</button>
-        <button class="category-btn" :class="{ active: currentCategory === 'Rice' }" @click="currentCategory = 'Rice'">ข้าว</button>
-        <button class="category-btn" :class="{ active: currentCategory === 'Beverage' }" @click="currentCategory = 'Beverage'">เครื่องดื่ม</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'ข้าว' }" @click="currentCategory = 'ข้าว'">ข้าว</button>
+        <button class="category-btn" :class="{ active: currentCategory === 'เครื่องดื่ม' }" @click="currentCategory = 'เครื่องดื่ม'">เครื่องดื่ม</button>
       </div>
 
       <ProductGrid :current-cook-type="cookType" :current-category="currentCategory" />
@@ -123,7 +123,8 @@ const changeMode = (mode) => {
 .category-btn { white-space: nowrap; padding: 8px 20px; border-radius: 20px; border: none; background-color: #fff; font-size: 0.95rem; font-weight: 500; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.3s; }
 .category-btn.active { background-color: #fce4e4; color: #000; font-weight: bold; }
 .app-content { flex: 1; padding: 0 16px 16px 16px; padding-bottom: 100px; overflow-y: auto; }
-.bottom-cart-bar { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 448px; background-color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 6px 20px rgba(0,0,0,0.15); border-radius: 30px; z-index: 20; }
+.bottom-cart-bar { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 448px; background-color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 6px 20px rgba(0,0,0,0.15); border-radius: 30px; z-index: 20; animation: slideUpFade 0.3s ease-out forwards; }
+@keyframes slideUpFade { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
 .cart-info { display: flex; align-items: center; }
 .total-price { font-size: 1.1rem; font-weight: bold; color: #333; }
 .checkout-btn { background-color: #e53935; color: white; border: none; padding: 12px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; font-size: 1rem; }
@@ -132,13 +133,4 @@ const changeMode = (mode) => {
 .cook-btn.active, .category-btn.active { box-shadow: 0 4px 12px rgba(229, 57, 53, 0.2); }
 .brand-title { margin: 0; font-family: 'Permanent Marker', cursive; font-size: 1.8rem; font-weight: 400; color: #e53935; line-height: 1.1; letter-spacing: 1px; text-shadow: 2px 2px 0px #000; transform: rotate(-2deg); }
 .brand-subtitle { margin: 0; margin-top: 4px; font-family: 'Prompt', sans-serif; font-size: 0.6rem; color: #333; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
-
-/* 🌟 ทำให้การเด้งขึ้นของแถบตะกร้าดูสมูทขึ้น (เผื่อคุณชอบ) 🌟 */
-.bottom-cart-bar {
-  animation: slideUpFade 0.3s ease-out forwards;
-}
-@keyframes slideUpFade {
-  from { opacity: 0; transform: translate(-50%, 20px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
-}
 </style>

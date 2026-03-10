@@ -23,17 +23,43 @@ export const useCartStore = defineStore('cart', {
 
     addToCart(product, addedAs) {
       const existingItem = this.items.find(item => item.id === product.id && item.typeAddedAs === addedAs);
+      
+      // 🌟 ดักจับสต๊อก: ถ้ามีของในตะกร้าอยู่แล้ว แล้วกดเพิ่มอีก ห้ามเกินสต๊อก
       if (existingItem) {
-        existingItem.quantity += 1;
+        if (existingItem.quantity < product.stock) {
+          existingItem.quantity += 1;
+        } else {
+          // แจ้งเตือนลูกค้าว่าของหมดโควต้าแล้ว
+          alert(`สินค้า "${product.name}" มีจำนวนสูงสุดแค่ ${product.stock} ที่เท่านั้นครับ`);
+          return; // เด้งออกไปเลย ไม่เพิ่มจำนวนให้
+        }
       } else {
-        this.items.push({ ...product, quantity: 1, typeAddedAs: addedAs });
+        // 🌟 ดักจับสต๊อก: ตอนกดครั้งแรก ต้องเช็คว่าสต๊อก > 0 ไหม
+        if (product.stock > 0) {
+          this.items.push({ ...product, quantity: 1, typeAddedAs: addedAs });
+        } else {
+          alert(`ขออภัยครับ สินค้า "${product.name}" หมดแล้วครับ`);
+          return;
+        }
       }
       this.saveCart();
     },
 
+    // ฟังก์ชันเวลากดเครื่องหมาย + ในหน้าตะกร้า (CartModal)
+    // 🌟 ต้องส่งข้อมูล 'สต๊อกที่อัปเดตแล้ว' มาให้ด้วย เพื่อให้เช็คได้แม่นยำขึ้น
+    // หมายเหตุ: ค่า item ที่รับมาในตะกร้า มักจะมี item.stock ติดมาด้วยจากตอน addToCart
     increaseQty(item) {
       const existingItem = this.items.find(i => i.id === item.id && i.typeAddedAs === item.typeAddedAs);
-      if (existingItem) existingItem.quantity++;
+      
+      if (existingItem) {
+        // 🌟 ดักจับสต๊อก
+        if (existingItem.quantity < item.stock) {
+          existingItem.quantity++;
+        } else {
+          alert(`ไม่สามารถเพิ่มจำนวนได้ เนื่องจากสต๊อกมีจำกัดเพียง ${item.stock} ที่ครับ`);
+          return;
+        }
+      }
       this.saveCart();
     },
 
@@ -91,6 +117,9 @@ export const useCartStore = defineStore('cart', {
 
         // ไปดูดข้อมูลบิลจาก Database มาโชว์
         await this.syncBills();
+
+        // แจ้งว่าออเดอร์ถูกส่งแล้ว (ถ้าอยากให้มี Alert บอก)
+        // alert('ส่งออเดอร์เรียบร้อยแล้วครับ!');
 
       } catch (error) {
         console.error('Checkout failed:', error);

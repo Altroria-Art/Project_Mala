@@ -16,12 +16,7 @@ export const menuService = {
         if (cookType === 'boiled') cookType = 'boil';
         if (cookType === 'grilled') cookType = 'grill';
 
-        let category = item.category || 'Others';
-
-        // 🌟 แก้ไขตรงนี้: ให้ "ข้าวสวย" ไปอยู่ในหมวด 'Rice' เพื่อให้ตรงกับปุ่มในหน้าเว็บ
-        if (item.name.includes('ข้าวสวย')) {
-          category = 'Rice';
-        }
+        let category = item.category || 'อื่นๆ';
 
         return {
           id: item.id,
@@ -29,7 +24,8 @@ export const menuService = {
           price: item.price,
           image: item.image_url,
           category: category, 
-          allowedCookTypes: [cookType] 
+          allowedCookTypes: [cookType],
+          stock: item.stock || 0  // 🌟 เพิ่มบรรทัดนี้เพื่อดึงสต๊อกมาใช้
         };
       });
     } catch (error) {
