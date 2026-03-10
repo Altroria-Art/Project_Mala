@@ -16,7 +16,7 @@ VALUES
     ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B9%80%E0%B8%99%E0%B8%B7%E0%B9%89%E0%B8%AD%E0%B8%AA%E0%B8%B1%E0%B8%95%E0%B8%A7%E0%B9%8C/grilled_marinated_chicken_1_10_bath.jpg', 'ไก่หมัก (1 ไม้)', 10, 50, 'เนื้อสัตว์', 'grilled', 0),
     ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B9%80%E0%B8%99%E0%B8%B7%E0%B9%89%E0%B8%AD%E0%B8%AA%E0%B8%B1%E0%B8%95%E0%B8%A7%E0%B9%8C/grilled_marinated_pork_1_10_bath.jpg', 'หมูหมัก (1 ไม้)', 10, 50, 'เนื้อสัตว์', 'grilled', 0),
     ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B9%80%E0%B8%99%E0%B8%B7%E0%B9%89%E0%B8%AD%E0%B8%AA%E0%B8%B1%E0%B8%95%E0%B8%A7%E0%B9%8C/grilled_pork_belly_1_10_bath.jpg', 'หมูสามชั้น (1 ไม้)', 10, 50, 'เนื้อสัตว์', 'grilled', 0),
-    ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B9%80%E0%B8%99%E0%B8%B7%E0%B9%89%E0%B8%AD%E0%B8%AA%E0%B8%B1%E0%B8%95%E0%B8%A7%E0%B9%8C/grilled_pork_liver_1_10_bath.jpg', 'ตับหมู (1 ไม้)', 10, 50, 'เนื้อสัตว์', 'grilled', 0);
+    ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B9%80%E0%B8%99%E0%B8%B7%E0%B9%89%E0%B8%AD%E0%B8%AA%E0%B8%B1%E0%B8%95%E0%B8%A7%E0%B9%8C/grilled_pork_liver_1_10_bath.jpg', 'ตับหมู (1 ไม้)', 10, 50, 'เนื้อสัตว์', 'grilled', 0),
 
     ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%99%E0%B9%80%E0%B8%A5%E0%B9%88%E0%B8%99/boiled_bologna_chicken_3_5_bath.jpg', 'โบโลน่าไก่ (3 ชิ้น)', 5, 50, 'ของทานเล่น', 'boiled', 0),
     ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%99%E0%B9%80%E0%B8%A5%E0%B9%88%E0%B8%99/boiled_cheese_ball_1_5_bath.jpg', 'ชีสบอล (1 ชิ้น)', 5, 50, 'ของทานเล่น', 'boiled', 0),
@@ -32,7 +32,7 @@ VALUES
     ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%99%E0%B9%80%E0%B8%A5%E0%B9%88%E0%B8%99/grilled_crab_stick_1_5_bath.jpg', 'ปูอัด (1 ไม้)', 5, 50, 'ของทานเล่น', 'grilled', 0),
     ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%99%E0%B9%80%E0%B8%A5%E0%B9%88%E0%B8%99/grilled_fish_ball_1_10_bath.jpg', 'ลูกชิ้นปลา (1 ไม้)', 10, 50, 'ของทานเล่น', 'grilled', 0),
     ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%99%E0%B9%80%E0%B8%A5%E0%B9%88%E0%B8%99/grilled_fish_tofu_1_5_bath.jpg', 'เต้าหู้ปลา (1 ไม้)', 5, 50, 'ของทานเล่น', 'grilled', 0),
-    ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%99%E0%B9%80%E0%B8%A5%E0%B9%88%E0%B8%99/grilled_sausage_1_5_bath.jpg', 'ไส้กรอก (1 ไม้)', 5, 50, 'ของทานเล่น', 'grilled', 0);
+    ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B8%82%E0%B8%AD%E0%B8%87%E0%B8%97%E0%B8%B2%E0%B8%99%E0%B9%80%E0%B8%A5%E0%B9%88%E0%B8%99/grilled_sausage_1_5_bath.jpg', 'ไส้กรอก (1 ไม้)', 5, 50, 'ของทานเล่น', 'grilled', 0),
     
     ('https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A7/steamed_rice_1_15_bath.jpg', 'ข้าวสวย (1 ถ้วย)', 15, 50, 'ข้าว', 'ready', 0),
 
