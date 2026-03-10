@@ -177,11 +177,8 @@ const saveProduct = async () => {
 
     alert('บันทึกเมนูสำเร็จ!');
     
-    newProduct.value = { name: '', price: null, stock: null, cooking_type: 'boiled', category: 'เนื้อสัตว์' };
-    previewImage.value = null;
-    selectedFile.value = null;
+    window.location.reload();
     
-    fetchProducts(); 
   } catch (error) {
     console.error("🚨 บันทึกล้มเหลว:", error);
     alert('เกิดข้อผิดพลาดในการบันทึกข้อมูล');
@@ -224,9 +221,9 @@ const saveEditProduct = async () => {
     if (!response.ok) throw new Error('Failed to update product');
     
     alert('บันทึกการแก้ไขสำเร็จ!');
-    editingProduct.value = null; 
-    editSelectedFile.value = null;
-    fetchProducts(); 
+    
+    window.location.reload();
+
   } catch (error) {
     console.error("🚨 แก้ไขข้อมูลล้มเหลว:", error);
     alert('เกิดข้อผิดพลาดในการแก้ไข');
@@ -244,7 +241,9 @@ const confirmDelete = async (id) => {
     if (!response.ok) throw new Error('Failed to delete product');
     
     alert('ลบเมนูสำเร็จ!');
-    fetchProducts(); 
+    
+    window.location.reload();
+
   } catch (error) {
     console.error("🚨 ลบเมนูล้มเหลว:", error);
     alert('เกิดข้อผิดพลาดในการลบ');

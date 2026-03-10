@@ -49,7 +49,8 @@ app.post('/api/products', async (c) => {
     let imageUrl = '';
 
     if (file && file.name) {
-      const fileName = `${Date.now()}_${file.name}`; 
+      // 🌟 แก้ไข: ใช้ category เป็นชื่อโฟลเดอร์
+      const fileName = `${category}/${Date.now()}_${file.name}`; 
       await c.env.mala.put(fileName, await file.arrayBuffer(), {
         httpMetadata: { contentType: file.type }
       });
@@ -82,7 +83,8 @@ app.patch('/api/products/:id', async (c) => {
     let params: any[] = [name, price, stock, category, cooking_type];
 
     if (file && file.name) {
-      const fileName = `uploads/${Date.now()}_${file.name}`;
+      // 🌟 แก้ไข: ใช้ category เป็นชื่อโฟลเดอร์ (แทนคำว่า 'uploads/' เดิม)
+      const fileName = `${category}/${Date.now()}_${file.name}`;
       await c.env.mala.put(fileName, await file.arrayBuffer(), {
         httpMetadata: { contentType: file.type }
       });
