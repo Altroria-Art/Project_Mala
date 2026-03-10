@@ -14,7 +14,6 @@ app.get('/', (c) => {
   return c.text('Server Mala is Running! 🍲')
 })
 
-// --- 📦 หมวดหมู่และสินค้า ---
 app.get('/api/categories', async (c) => {
   try {
     const { results } = await c.env.project_mala_db.prepare(
@@ -49,12 +48,11 @@ app.post('/api/products', async (c) => {
     let imageUrl = '';
 
     if (file && file.name) {
-      // 🌟 แก้ไข: ใช้ category เป็นชื่อโฟลเดอร์
       const fileName = `${category}/${Date.now()}_${file.name}`; 
       await c.env.mala.put(fileName, await file.arrayBuffer(), {
         httpMetadata: { contentType: file.type }
       });
-      const r2BaseUrl = "https://pub-17c841dc329349f081a01a422b92e695.r2.dev";
+      const r2BaseUrl = "https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev";
       imageUrl = `${r2BaseUrl}/${encodeURI(fileName)}`; 
     }
 
@@ -83,12 +81,12 @@ app.patch('/api/products/:id', async (c) => {
     let params: any[] = [name, price, stock, category, cooking_type];
 
     if (file && file.name) {
-      // 🌟 แก้ไข: ใช้ category เป็นชื่อโฟลเดอร์ (แทนคำว่า 'uploads/' เดิม)
+
       const fileName = `${category}/${Date.now()}_${file.name}`;
       await c.env.mala.put(fileName, await file.arrayBuffer(), {
         httpMetadata: { contentType: file.type }
       });
-      const imageUrl = `https://pub-17c841dc329349f081a01a422b92e695.r2.dev/${encodeURI(fileName)}`; 
+      const imageUrl = `https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/${encodeURI(fileName)}`; 
       imageUrlUpdateQuery = ', image_url = ?';
       params.push(imageUrl);
     }
@@ -126,7 +124,6 @@ app.get('/uploads/:filename', async (c) => {
   return new Response(object.body, { headers });
 });
 
-// --- 🧾 ระบบออเดอร์ ---
 app.post('/api/orders', async (c) => {
   try {
     const body = await c.req.json();
@@ -140,13 +137,11 @@ app.post('/api/orders', async (c) => {
     const order_id = orderResult.id;
 
     for (const item of items) {
-      // 1. บันทึกข้อมูลลงบิล (order_items)
       await c.env.project_mala_db.prepare(
         `INSERT INTO order_items (order_id, product_name, cooking_type, quantity, subtotal_price) 
          VALUES (?, ?, ?, ?, ?)`
       ).bind(order_id, item.name, item.typeAddedAs || 'boiled', item.quantity, item.price * item.quantity).run();
 
-      // 2. 🌟 ตัดสต๊อกในฐานข้อมูลจริงทันที 🌟
       await c.env.project_mala_db.prepare(
         `UPDATE products SET stock = stock - ? WHERE id = ?`
       ).bind(item.quantity, item.id).run();
@@ -164,11 +159,20 @@ app.get('/api/orders/queue', async (c) => {
       "SELECT * FROM orders WHERE status = 'unpaid' ORDER BY created_at ASC"
     ).all();
 
-    const queueData = [];
-    for (const order of orders) {
-      const { results: items } = await c.env.project_mala_db.prepare("SELECT * FROM order_items WHERE order_id = ?").bind(order.id).all();
-      queueData.push({ ...order, items: items });
-    }
+    if (orders.length === 0) return c.json([]);
+
+    const orderIds = orders.map((o: any) => o.id);
+    const placeholders = orderIds.map(() => '?').join(',');
+    
+    const { results: allItems } = await c.env.project_mala_db.prepare(
+      `SELECT * FROM order_items WHERE order_id IN (${placeholders})`
+    ).bind(...orderIds).all();
+
+    const queueData = orders.map((order: any) => ({
+      ...order,
+      items: allItems.filter((item: any) => item.order_id === order.id)
+    }));
+
     return c.json(queueData);
   } catch (e: any) {
     return c.json({ error: 'Database Error', message: e.message }, 500);
@@ -231,7 +235,6 @@ app.patch('/api/orders/:id/status', async (c) => {
   }
 })
 
-// --- 💰 ระบบรายได้และสถิติ (แก้ไข Timezone เป็นไทย +7 hours) ---
 app.get('/api/revenue/summary', async (c) => {
   try {
     const today = await c.env.project_mala_db.prepare(
