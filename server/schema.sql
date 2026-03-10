@@ -45,6 +45,17 @@ CREATE TABLE payments (
     FOREIGN KEY (order_id) REFERENCES orders(id) 
 );
 
+INSERT INTO products (image_url, name, price, stock, category, cooking_type, is_deleted)
+VALUES (
+    'https://pub-119ea7935c6f4804a6fd5cee2df19546.r2.dev/%E0%B9%80%E0%B8%84%E0%B8%A3%E0%B8%B7%E0%B9%88%E0%B8%AD%E0%B8%87%E0%B8%94%E0%B8%B7%E0%B9%88%E0%B8%A1/1773163211275_coke_1_10_bath.jpg', 
+    'โค้ก (1 ขวด)', 
+    10, 
+    100, 
+    'เครื่องดื่ม', 
+    'ready', 
+    0
+);
+
 CREATE INDEX idx_order_items_order_id ON order_items(order_id);
 
 CREATE INDEX idx_orders_status ON orders(status);
