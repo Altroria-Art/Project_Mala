@@ -25,7 +25,7 @@
       </div>
 
       <transition name="expand">
-        <div class="table-expanded-body" v-if="expandedTableId === table.id">
+        <div class="table-expanded-body" v-if="expandedTableId === table.id && table.bills.length > 0">
           <div class="bills-grid">
             <div v-for="(bill, index) in table.bills" :key="bill.id" class="bill-card">
               <div class="bill-card-header">
@@ -173,21 +173,17 @@ import { adminService } from '../../services/adminService';
 const expandedTableId = ref(null);
 const tables = ref([]);
 
-// 🌟 ตัวแปร Modal ดูบิลเต็ม
 const isViewBillModalOpen = ref(false);
 const selectedBillForView = ref(null);
 const selectedBillIndex = ref(0);
 const selectedTableNoForView = ref('');
 
-// 🌟 ตัวแปร Modal ยืนยันชำระเงินรวบยอด
 const isPayModalOpen = ref(false);
 const selectedTableForPay = ref(null);
 
-// 🌟 ตัวแปร Modal ยืนยันชำระบิลเดี่ยว (อันใหม่!)
 const isSinglePayModalOpen = ref(false);
 const selectedSingleBill = ref(null);
 
-// 🌟 ตัวแปร Modal แจ้งเตือนชำระเงินสำเร็จ
 const isSuccessModalOpen = ref(false);
 const successMessage = ref('');
 
@@ -270,14 +266,32 @@ const closeSinglePayModal = () => {
 
 const executePaySingleBill = async () => {
   if (!selectedSingleBill.value) return;
+  const targetBillId = selectedSingleBill.value.id; 
 
   try {
-    await adminService.updateOrderStatus(selectedSingleBill.value.id, 'paid');
-    loadTables(); 
+    await adminService.updateOrderStatus(targetBillId, 'paid');
+
+    tables.value.forEach(table => {
+      const hasBill = table.bills.some(b => b.id === targetBillId);
+      if (hasBill) {
+        table.bills = table.bills.filter(b => b.id !== targetBillId);
+
+        if (table.bills.length === 0) {
+          table.status = 'empty';
+          if (expandedTableId.value === table.id) {
+            expandedTableId.value = null; // ปิด Accordion ทันที
+          }
+        }
+      }
+    });
+
+    closeSinglePayModal(); 
 
     setTimeout(() => {
       showSuccessModal('ชำระเงินบิลเรียบร้อยแล้ว!'); 
     }, 200);
+
+    loadTables();
 
   } catch (error) {
     console.error("Error paying single bill:", error);
@@ -317,19 +331,27 @@ const closePayModal = () => {
 
 const executePayTable = async () => {
   if (!selectedTableForPay.value) return;
+  const targetTableId = selectedTableForPay.value.id;
 
   try {
     const promises = selectedTableForPay.value.bills.map(bill => adminService.updateOrderStatus(bill.id, 'paid'));
     await Promise.all(promises);
 
+    const tableIndex = tables.value.findIndex(t => t.id === targetTableId);
+    if (tableIndex !== -1) {
+      tables.value[tableIndex].bills = [];
+      tables.value[tableIndex].status = 'empty';
+    }
+
     expandedTableId.value = null; 
-    loadTables();
     closePayModal(); 
     
     setTimeout(() => {
       showSuccessModal('ชำระเงินรวบยอดสำเร็จ!');
     }, 200);
     
+    loadTables();
+
   } catch (error) {
     console.error("Error paying table:", error);
     alert('เกิดข้อผิดพลาดในการชำระเงินรวบยอด');
@@ -392,7 +414,6 @@ const executePayTable = async () => {
 .total-highlight { background: #fff1f2; padding: 15px; border-radius: 12px; color: #be123c; font-weight: 600; font-size: 16px; }
 .total-highlight span { font-size: 24px; font-weight: 700; display: block; margin-top: 5px; }
 
-/* แยกสี Popup บิลเดี่ยวให้ดูแตกต่างจากรวบยอดนิดหน่อยครับ */
 .single-bill-highlight { background: #f0fdf4; color: #15803d; }
 .single-pay-btn { background: #10b981; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); }
 
@@ -402,7 +423,6 @@ const executePayTable = async () => {
 .confirm-pay-btn { flex: 1; padding: 12px; border: none; background: #ef4444; color: white; border-radius: 10px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.3); transition: transform 0.2s; }
 .confirm-pay-btn:active { transform: scale(0.96); }
 
-/* 🌟 Styles สำหรับ Modal สำเร็จ */
 .success-modal { padding: 40px 24px 30px 24px; text-align: center; max-width: 320px; }
 .success-icon { width: 70px; height: 70px; margin: 0 auto 20px; color: #10b981; }
 .success-icon svg { width: 100%; height: 100%; }

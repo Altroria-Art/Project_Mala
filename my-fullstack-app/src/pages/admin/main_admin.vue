@@ -78,7 +78,6 @@
           </div>
           
           <div class="modal-body confirm-modal-body">
-            <div class="warning-icon">👨‍🍳</div>
             <h2>ปรุงอาหารเสร็จแล้ว?</h2>
             <p>ยืนยันว่าออเดอร์ของ <strong>โต๊ะ {{ selectedOrderForCook?.tableNo }} (บิลที่ {{ selectedOrderForCook?.billNo }})</strong> ปรุงเสร็จและพร้อมเสิร์ฟแล้วใช่หรือไม่?</p>
           </div>
@@ -248,7 +247,6 @@ const executeCookOrder = async () => {
 .more-indicator.clickable { cursor: pointer; font-weight: 600; border: 1px dashed #86efac; transition: all 0.2s; }
 .more-indicator.clickable:hover { background-color: #dcfce7; color: #15803d; }
 
-/* 🌟 สไตล์ Modal ทั่วไป */
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 9999; }
 .modal-content { background: white; border-radius: 20px; width: 90%; max-width: 450px; display: flex; flex-direction: column; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); overflow: hidden; }
 .modal-header { padding: 16px 20px; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; background: #f8fafc; }
@@ -259,7 +257,6 @@ const executeCookOrder = async () => {
 .full-items-list { list-style: none; padding: 0; margin: 0 0 20px 0; }
 .modal-footer { padding: 20px 24px; border-top: 1px solid #e5e7eb; background: #f8fafc; }
 
-/* 🌟 สไตล์ Modal ยืนยันปรุงเสร็จ */
 .confirm-modal-body { padding: 30px 20px; text-align: center; }
 .warning-icon { font-size: 48px; margin-bottom: 10px; }
 .confirm-modal-body h2 { margin: 0 0 10px 0; color: #1e293b; }
@@ -270,7 +267,6 @@ const executeCookOrder = async () => {
 .confirm-action-btn { flex: 1; padding: 12px; border: none; background: #3b82f6; color: white; border-radius: 10px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3); transition: transform 0.2s; }
 .confirm-action-btn:active { transform: scale(0.96); }
 
-/* 🌟 สไตล์ Modal สำเร็จ */
 .success-modal { padding: 40px 24px 30px 24px; text-align: center; max-width: 320px; border-radius: 20px;}
 .success-icon { width: 70px; height: 70px; margin: 0 auto 20px; color: #10b981; }
 .success-icon svg { width: 100%; height: 100%; }

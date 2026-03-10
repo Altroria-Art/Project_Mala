@@ -2,21 +2,18 @@ import { defineStore } from 'pinia';
 
 export const useCartStore = defineStore('cart', {
   state: () => ({
-    // โหลดของที่อยู่ในตะกร้าจาก LocalStorage (ถ้ามี) กันรีเฟรชแล้วตะกร้าหาย
     items: JSON.parse(localStorage.getItem('cart_items')) || [],
-    bills: [] // ประวัติการสั่ง จะดึงจาก Database แทน
+    bills: []
   }),
   
   getters: {
     totalItems: (state) => state.items.reduce((total, item) => total + item.quantity, 0),
     totalPrice: (state) => state.items.reduce((total, item) => total + (item.price * item.quantity), 0),
- 
     orderCount: (state) => state.bills.length,
     grandTotalPrice: (state) => state.bills.reduce((total, bill) => total + bill.totalPrice, 0)
   },
   
   actions: {
-    // ฟังก์ชันช่วยเซฟตะกร้าลงเครื่อง
     saveCart() {
       localStorage.setItem('cart_items', JSON.stringify(this.items));
     },
@@ -24,17 +21,14 @@ export const useCartStore = defineStore('cart', {
     addToCart(product, addedAs) {
       const existingItem = this.items.find(item => item.id === product.id && item.typeAddedAs === addedAs);
       
-      // 🌟 ดักจับสต๊อก: ถ้ามีของในตะกร้าอยู่แล้ว แล้วกดเพิ่มอีก ห้ามเกินสต๊อก
       if (existingItem) {
         if (existingItem.quantity < product.stock) {
           existingItem.quantity += 1;
         } else {
-          // แจ้งเตือนลูกค้าว่าของหมดโควต้าแล้ว
-          alert(`สินค้า "${product.name}" มีจำนวนสูงสุดแค่ ${product.stock} ที่เท่านั้นครับ`);
-          return; // เด้งออกไปเลย ไม่เพิ่มจำนวนให้
+          alert(`สินค้า "${product.name}" มีจำนวนสูงสุดแค่ ${product.stock} ชิ้นเท่านั้นครับ`);
+          return; 
         }
       } else {
-        // 🌟 ดักจับสต๊อก: ตอนกดครั้งแรก ต้องเช็คว่าสต๊อก > 0 ไหม
         if (product.stock > 0) {
           this.items.push({ ...product, quantity: 1, typeAddedAs: addedAs });
         } else {
@@ -45,18 +39,13 @@ export const useCartStore = defineStore('cart', {
       this.saveCart();
     },
 
-    // ฟังก์ชันเวลากดเครื่องหมาย + ในหน้าตะกร้า (CartModal)
-    // 🌟 ต้องส่งข้อมูล 'สต๊อกที่อัปเดตแล้ว' มาให้ด้วย เพื่อให้เช็คได้แม่นยำขึ้น
-    // หมายเหตุ: ค่า item ที่รับมาในตะกร้า มักจะมี item.stock ติดมาด้วยจากตอน addToCart
     increaseQty(item) {
       const existingItem = this.items.find(i => i.id === item.id && i.typeAddedAs === item.typeAddedAs);
-      
       if (existingItem) {
-        // 🌟 ดักจับสต๊อก
         if (existingItem.quantity < item.stock) {
           existingItem.quantity++;
         } else {
-          alert(`ไม่สามารถเพิ่มจำนวนได้ เนื่องจากสต๊อกมีจำกัดเพียง ${item.stock} ที่ครับ`);
+          alert(`ไม่สามารถเพิ่มจำนวนได้ เนื่องจากสต๊อกมีจำกัดเพียง ${item.stock} ชิ้นครับ`);
           return;
         }
       }
@@ -82,7 +71,7 @@ export const useCartStore = defineStore('cart', {
     },
 
     async checkout(tableNumber, boilSoup, boilSpice, grillSpice) {
-      if (this.items.length === 0) return;
+      if (this.items.length === 0) return { success: false, message: 'ไม่มีสินค้าในตะกร้า' };
 
       const orderedItems = JSON.parse(JSON.stringify(this.items));
       const billTotal = this.totalPrice;
@@ -91,7 +80,7 @@ export const useCartStore = defineStore('cart', {
       const hasGrill = orderedItems.some(i => i.typeAddedAs === 'grill');
 
       const payload = {
-        table_id: parseInt(tableNumber) || 1,
+        table_id: parseInt(tableNumber) || 1, // บันทึกบิลเป็นโต๊ะ 1 ตามที่คุณต้องการ
         items: orderedItems,
         total_price: billTotal,
         soup_type: hasBoil ? boilSoup : null,
@@ -106,30 +95,26 @@ export const useCartStore = defineStore('cart', {
           body: JSON.stringify(payload)
         });
 
-        if (!response.ok) throw new Error('Network response was not ok');
-        
-        // สั่งสำเร็จ! จำเบอร์โต๊ะไว้ในเครื่องลูกค้า
-        localStorage.setItem('my_table_id', tableNumber);
+        const data = await response.json();
 
-        // ล้างตะกร้า
+        if (!response.ok || !data.success) {
+          return { success: false, message: data.message || 'เกิดข้อผิดพลาดในการสั่งอาหาร' };
+        }
+        
+        localStorage.setItem('my_table_id', tableNumber);
         this.items = [];
         this.saveCart();
-
-        // ไปดูดข้อมูลบิลจาก Database มาโชว์
         await this.syncBills();
 
-        // แจ้งว่าออเดอร์ถูกส่งแล้ว (ถ้าอยากให้มี Alert บอก)
-        // alert('ส่งออเดอร์เรียบร้อยแล้วครับ!');
+        return { success: true, message: 'ส่งออเดอร์ไปที่ครัวเรียบร้อยแล้วครับ!' };
 
       } catch (error) {
         console.error('Checkout failed:', error);
-        alert('เกิดข้อผิดพลาดในการส่งออเดอร์ กรุณาลองใหม่อีกครั้ง');
+        return { success: false, message: 'เกิดข้อผิดพลาดในการส่งออเดอร์ กรุณาลองใหม่อีกครั้ง' };
       }
     },
 
-    // 🌟 ดึงข้อมูลบิลของโต๊ะตัวเองจาก Database
     async syncBills() {
-      // เช็คก่อนว่าเครื่องนี้เคยสั่งอาหารโต๊ะไหนไป
       const tableId = localStorage.getItem('my_table_id');
       if (!tableId) return;
 
@@ -139,7 +124,6 @@ export const useCartStore = defineStore('cart', {
         
         const activeOrders = await response.json();
 
-        // แปลงข้อมูลจาก DB ให้ตรงกับที่ Vue นำไปแสดงผล
         this.bills = activeOrders.map(order => ({
           id: order.id,
           items: order.items.map(i => ({

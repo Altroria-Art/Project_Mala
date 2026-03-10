@@ -30,7 +30,9 @@
           <option value="ข้าว">ข้าว</option>
           <option value="เครื่องดื่ม">เครื่องดื่ม</option>
         </select>
-      </div> <div class="preview-section">
+      </div> 
+      
+      <div class="preview-section">
         <h3 class="preview-title">ตัวอย่างก่อนบันทึก</h3>
         <div class="preview-card">
           <div class="preview-img-box">
@@ -73,44 +75,62 @@
       </div>
     </section>
 
-    <div v-if="editingProduct" class="modal-overlay">
-      <div class="modal-content">
-        <h2>แก้ไขเมนู</h2>
-        <div class="form-grid">
-          
-          <div style="width: 100%; display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
-            <img v-if="editingProduct.image_url" :src="editingProduct.image_url" alt="Current Image" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;" />
-            <label class="upload-btn" style="flex-grow: 1; text-align: center; margin: 0;">
-              เปลี่ยนรูปภาพ
-              <input type="file" @change="onEditFileChange" accept="image/*" hidden />
-            </label>
-          </div>
+    <transition name="fade">
+      <div v-if="editingProduct" class="modal-overlay" @click.self="editingProduct = null">
+        <div class="modal-content">
+          <h2>แก้ไขเมนู</h2>
+          <div class="form-grid">
+            
+            <div style="width: 100%; display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+              <img v-if="editingProduct.image_url" :src="editingProduct.image_url" alt="Current Image" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;" />
+              <label class="upload-btn" style="flex-grow: 1; text-align: center; margin: 0;">
+                เปลี่ยนรูปภาพ
+                <input type="file" @change="onEditFileChange" accept="image/*" hidden />
+              </label>
+            </div>
 
-          <input type="text" v-model="editingProduct.name" placeholder="ชื่อเมนู" class="input-field" />
-          <input type="number" v-model="editingProduct.price" placeholder="ราคา" class="input-field" />
-          <input type="number" v-model="editingProduct.stock" placeholder="จำนวน" class="input-field" />
-          
-          <select v-model="editingProduct.cooking_type" class="select-field">
-            <option value="boiled">ต้ม</option>
-            <option value="grilled">ย่าง</option>
-            <option value="ready">พร้อมทาน</option>
-          </select>
-          
-          <select v-model="editingProduct.category" class="select-field">
-            <option value="เนื้อสัตว์">เนื้อสัตว์</option>
-            <option value="ผัก">ผัก</option>
-            <option value="ของทานเล่น">ของทานเล่น</option>
-            <option value="เส้น">เส้น</option>
-            <option value="ข้าว">ข้าว</option>
-            <option value="เครื่องดื่ม">เครื่องดื่ม</option>
-          </select>
-        </div>
-        <div class="modal-actions">
-          <button class="cancel-btn" @click="editingProduct = null">ยกเลิก</button>
-          <button class="save-btn" @click="saveEditProduct">บันทึก</button>
+            <input type="text" v-model="editingProduct.name" placeholder="ชื่อเมนู" class="input-field" />
+            <input type="number" v-model="editingProduct.price" placeholder="ราคา" class="input-field" />
+            <input type="number" v-model="editingProduct.stock" placeholder="จำนวน" class="input-field" />
+            
+            <select v-model="editingProduct.cooking_type" class="select-field">
+              <option value="boiled">ต้ม</option>
+              <option value="grilled">ย่าง</option>
+              <option value="ready">พร้อมทาน</option>
+            </select>
+            
+            <select v-model="editingProduct.category" class="select-field">
+              <option value="เนื้อสัตว์">เนื้อสัตว์</option>
+              <option value="ผัก">ผัก</option>
+              <option value="ของทานเล่น">ของทานเล่น</option>
+              <option value="เส้น">เส้น</option>
+              <option value="ข้าว">ข้าว</option>
+              <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button class="cancel-btn" @click="editingProduct = null">ยกเลิก</button>
+            <button class="save-btn" @click="saveEditProduct">บันทึก</button>
+          </div>
         </div>
       </div>
-    </div>
+    </transition>
+
+    <transition name="fade">
+      <div class="modal-overlay" v-if="isSuccessModalOpen" @click.self="closeSuccessModal">
+        <div class="modal-content success-modal">
+          <div class="success-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+          <h2>สำเร็จ!</h2>
+          <p>{{ successMessage }}</p>
+          <button class="success-ok-btn" @click="closeSuccessModal">ตกลง</button>
+        </div>
+      </div>
+    </transition>
 
   </div> 
 </template>
@@ -131,6 +151,30 @@ const selectedFile = ref(null);
 const products = ref([]);
 const editingProduct = ref(null); 
 const editSelectedFile = ref(null);
+
+const isSuccessModalOpen = ref(false);
+const successMessage = ref('');
+
+const showSuccessModal = (message) => {
+  successMessage.value = message;
+  isSuccessModalOpen.value = true;
+};
+
+const closeSuccessModal = () => {
+  isSuccessModalOpen.value = false;
+};
+
+const resetForm = () => {
+  newProduct.value = {
+    name: '',
+    price: null,
+    stock: null,
+    cooking_type: 'boiled', 
+    category: 'เนื้อสัตว์'
+  };
+  previewImage.value = null;
+  selectedFile.value = null;
+};
 
 const fetchProducts = async () => {
   try {
@@ -175,9 +219,9 @@ const saveProduct = async () => {
 
     if (!response.ok) throw new Error('Failed to save product');
 
-    alert('บันทึกเมนูสำเร็จ!');
-    
-    window.location.reload();
+    resetForm();
+    fetchProducts();
+    showSuccessModal('บันทึกเมนูสำเร็จ!');
     
   } catch (error) {
     console.error("🚨 บันทึกล้มเหลว:", error);
@@ -219,10 +263,10 @@ const saveEditProduct = async () => {
     });
 
     if (!response.ok) throw new Error('Failed to update product');
-    
-    alert('บันทึกการแก้ไขสำเร็จ!');
-    
-    window.location.reload();
+
+    editingProduct.value = null;
+    fetchProducts();
+    showSuccessModal('บันทึกการแก้ไขสำเร็จ!');
 
   } catch (error) {
     console.error("🚨 แก้ไขข้อมูลล้มเหลว:", error);
@@ -240,9 +284,9 @@ const confirmDelete = async (id) => {
 
     if (!response.ok) throw new Error('Failed to delete product');
     
-    alert('ลบเมนูสำเร็จ!');
-    
-    window.location.reload();
+    // 🌟 ใช้งาน Popup แบบใหม่และโหลดข้อมูลโดยไม่ต้อง Refresh หน้า
+    fetchProducts();
+    showSuccessModal('ลบเมนูสำเร็จ!');
 
   } catch (error) {
     console.error("🚨 ลบเมนูล้มเหลว:", error);
@@ -341,7 +385,9 @@ const confirmDelete = async (id) => {
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
+  transition: transform 0.2s;
 }
+.save-btn:active { transform: scale(0.96); }
 
 .product-grid {
   display: grid;
@@ -391,12 +437,12 @@ const confirmDelete = async (id) => {
   border: none;
   font-size: 12px;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
 .edit-btn { background: #4b5563; color: white; }
 .delete-btn { background: #fee2e2; color: #ef4444; }
 
-/* === เพิ่ม CSS ของ Modal === */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -408,21 +454,23 @@ const confirmDelete = async (id) => {
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
   background: white;
   padding: 30px;
-  border-radius: 15px;
+  border-radius: 20px;
   width: 90%;
   max-width: 500px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
 }
 
 .modal-content h2 {
   margin-top: 0;
   margin-bottom: 20px;
   font-size: 20px;
+  color: #1e293b;
 }
 
 .modal-actions {
@@ -437,7 +485,21 @@ const confirmDelete = async (id) => {
   color: #4b5563;
   border: none;
   padding: 10px 20px;
-  border-radius: 8px;
+  border-radius: 12px;
   cursor: pointer;
+  font-weight: 600;
 }
+
+/* 🌟 Styles เฉพาะ Modal สำเร็จ */
+.success-modal { padding: 40px 24px 30px 24px; text-align: center; max-width: 320px; }
+.success-icon { width: 70px; height: 70px; margin: 0 auto 20px; color: #10b981; }
+.success-icon svg { width: 100%; height: 100%; }
+.success-modal h2 { margin: 0 0 10px 0; color: #1e293b; font-size: 24px; font-weight: 700; }
+.success-modal p { color: #64748b; margin: 0 0 30px 0; font-size: 16px; }
+.success-ok-btn { background: #10b981; color: white; border: none; padding: 14px 30px; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3); transition: transform 0.2s, background 0.2s; }
+.success-ok-btn:hover { background: #059669; }
+.success-ok-btn:active { transform: scale(0.96); }
+
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
 </style>

@@ -16,13 +16,11 @@
         </header>
 
         <main class="cart-body">
-          
           <div v-if="cartStore.items.length === 0" class="empty-cart">
             ยังไม่มีสินค้าในตะกร้า
           </div>
 
           <div v-else>
-            
             <div v-if="boiledItems.length > 0">
               <div class="options-section">
                 <h3 class="option-title">น้ำซุป (สำหรับแบบต้ม)</h3>
@@ -66,7 +64,7 @@
                   <div class="qty-control">
                     <button class="qty-btn" @click="cartStore.decreaseQty(item)">-</button>
                     <span class="qty-number">{{ item.quantity }}</span>
-                    <button class="qty-btn" @click="cartStore.increaseQty(item)">+</button>
+                    <button class="qty-btn" @click="handleIncreaseQty(item)">+</button>
                   </div>
                 </div>
               </div>
@@ -81,13 +79,13 @@
                   <div class="qty-control">
                     <button class="qty-btn" @click="cartStore.decreaseQty(item)">-</button>
                     <span class="qty-number">{{ item.quantity }}</span>
-                    <button class="qty-btn" @click="cartStore.increaseQty(item)">+</button>
+                    <button class="qty-btn" @click="handleIncreaseQty(item)">+</button>
                   </div>
                 </div>
               </div>
 
               <div v-if="readyItems.length > 0" class="menu-group">
-                <h4 class="group-title">🥤 เครื่องดื่ม</h4>
+                <h4 class="group-title">🥤 ข้าว/เครื่องดื่ม</h4>
                 <div v-for="item in readyItems" :key="item.id + 'ready'" class="cart-item">
                   <div class="item-info">
                     <p class="item-name">{{ item.name }}</p>
@@ -96,14 +94,12 @@
                   <div class="qty-control">
                     <button class="qty-btn" @click="cartStore.decreaseQty(item)">-</button>
                     <span class="qty-number">{{ item.quantity }}</span>
-                    <button class="qty-btn" @click="cartStore.increaseQty(item)">+</button>
+                    <button class="qty-btn" @click="handleIncreaseQty(item)">+</button>
                   </div>
                 </div>
               </div>
             </div>
-
           </div>
-
         </main>
 
         <footer class="cart-footer">
@@ -121,22 +117,32 @@
           </button>
         </footer>
 
-        <div v-if="showConfirm" class="confirm-overlay blur-bg">
-          <div class="confirm-box light-premium-box">
-            <div class="light-inner-border"></div>
-            
-            <h3 class="gold-title-light">
-              ยืนยันจะสั่งอาหาร?
-            </h3>
-            
-            <p class="premium-desc-light">
-              เมื่อกดสั่งอาหารแล้วทางร้านจะเริ่ม<br/>ทำอาหารทันที<br/>
-              <span class="text-highlight-light">ไม่สามารถยกเลิกออเดอร์ได้</span>
+        <div v-if="showConfirm" class="confirm-overlay modern-confirm-overlay">
+          <div class="modern-confirm-box">
+            <div class="confirm-food-icon">🍜</div>
+            <h2 class="modern-confirm-title">
+              ยืนยันสั่งอาหาร
+            </h2>
+            <p class="modern-confirm-desc">
+              เมื่อกดสั่งอาหารแล้ว<br>
+              ทางร้านจะเริ่มทำอาหารทันที
             </p>
-            
-            <div class="premium-actions">
-              <button class="premium-cancel-btn-light" @click="showConfirm = false">ยกเลิก</button>
-              <button class="premium-confirm-btn-light" @click="confirmOrder">ยืนยัน</button>
+            <p class="modern-confirm-warning">
+              ไม่สามารถยกเลิกออเดอร์ได้
+            </p>
+            <div class="modern-confirm-actions">
+              <button 
+                class="modern-cancel-btn"
+                @click="showConfirm = false"
+              >
+                ยกเลิก
+              </button>
+              <button 
+                class="modern-confirm-btn"
+                @click="confirmOrder"
+              >
+                ยืนยันการสั่ง
+              </button>
             </div>
           </div>
         </div>
@@ -155,6 +161,16 @@
 
       </div>
     </div>
+    
+    <div v-if="showStockAlert" class="stock-alert-overlay" @click="closeAlertPopup">
+      <div class="stock-alert-box" @click.stop>
+        <div class="alert-icon">{{ isSuccessAction ? '✅' : '⚠️' }}</div>
+        <h3 class="alert-title">{{ isSuccessAction ? 'สำเร็จ!' : 'ขออภัยครับ' }}</h3>
+        <p class="alert-desc" :class="{'text-green': isSuccessAction}">{{ alertMessage }}</p>
+        <button class="alert-ok-btn" :class="{'bg-green': isSuccessAction}" @click="closeAlertPopup">ตกลง</button>
+      </div>
+    </div>
+
   </Teleport>
 </template>
 
@@ -175,23 +191,48 @@ const grillSpiceLevel = ref(1);
 const showConfirm = ref(false); 
 const showClearConfirm = ref(false); 
 
+const showStockAlert = ref(false);
+const alertMessage = ref('');
+const isSuccessAction = ref(false);
+
 const emit = defineEmits(['close']);
 const closeModal = () => emit('close');
 
-const executeClearCart = () => {
-  if (cartStore.clearCart) {
-    cartStore.clearCart();
+const handleIncreaseQty = (item) => {
+  if (item.quantity >= item.stock) {
+    alertMessage.value = `ไม่สามารถเพิ่มจำนวนได้ เนื่องจากสต๊อกมีจำกัดเพียง ${item.stock} ชิ้นครับ`;
+    isSuccessAction.value = false;
+    showStockAlert.value = true;
   } else {
-    cartStore.items = [];
-    localStorage.setItem('cart_items', JSON.stringify([]));
+    cartStore.increaseQty(item);
   }
+};
+
+const executeClearCart = () => {
+  cartStore.clearCart();
   showClearConfirm.value = false; 
 };
 
 const confirmOrder = async () => {
-  await cartStore.checkout('1', soupType.value, boilSpiceLevel.value, grillSpiceLevel.value);
   showConfirm.value = false; 
-  emit('close'); 
+  const result = await cartStore.checkout('1', soupType.value, boilSpiceLevel.value, grillSpiceLevel.value);
+  
+  if (result && result.success) {
+    alertMessage.value = result.message;
+    isSuccessAction.value = true;
+    showStockAlert.value = true;
+  } else {
+    alertMessage.value = result ? result.message : 'เกิดข้อผิดพลาด';
+    isSuccessAction.value = false;
+    showStockAlert.value = true;
+  }
+};
+
+const closeAlertPopup = () => {
+  showStockAlert.value = false;
+  if (isSuccessAction.value) {
+    window.location.reload(); 
+  }
 };
 </script>
 
@@ -199,33 +240,26 @@ const confirmOrder = async () => {
 .cart-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100vh; height: 100dvh; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: flex-end; z-index: 9999; }
 .cart-modal-container { position: relative; width: 100%; max-width: 480px; height: 100%; max-height: 85vh; max-height: 85dvh; background-color: #fff; border-radius: 20px 20px 0 0; display: flex; flex-direction: column; overflow: hidden; animation: slideUp 0.3s ease-out; }
 @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
 .cart-header { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #f0f0f0; }
 .header-title { margin: 0; font-size: 1.1rem; font-weight: bold; color: #333; }
 .icon-btn { background: none; border: none; cursor: pointer; color: #333; display: flex; align-items: center; justify-content: center; padding: 8px; }
 .delete-btn { color: #ff4d4f; }
-
 .cart-body { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 24px; }
 .menu-group { margin-bottom: 20px; }
 .group-title { font-size: 1rem; font-weight: bold; color: #c62828; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #eee; }
-
 .cart-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .item-info { display: flex; flex-direction: column; gap: 4px; }
 .item-name { margin: 0; font-size: 1rem; color: #333; }
 .item-price { margin: 0; font-weight: bold; color: #000; }
-
 .qty-control { display: flex; align-items: center; background-color: #f5f5f5; border-radius: 8px; padding: 4px; }
 .qty-btn { background-color: white; border: none; width: 28px; height: 28px; border-radius: 6px; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .qty-number { margin: 0 12px; font-weight: bold; }
-
 .divider { border: none; border-top: 6px solid #f0f2f5; margin: 16px -16px 24px -16px; }
-
 .options-section { margin-bottom: 20px; }
 .option-title { font-size: 0.95rem; font-weight: bold; margin-bottom: 12px; color: #555; }
 .option-grid { display: flex; flex-wrap: wrap; gap: 12px; }
 .option-chip { padding: 8px 16px; border: 1px solid #ddd; background-color: #fff; border-radius: 8px; font-size: 0.95rem; cursor: pointer; transition: all 0.2s; }
 .option-chip.active { background-color: #c62828; color: #fff; border-color: #c62828; font-weight: bold; }
-
 .cart-footer { padding: 16px; background-color: #fff; border-top: 1px solid #eee; box-shadow: 0 -4px 12px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 12px; z-index: 10; }
 .summary-text { display: flex; justify-content: space-between; font-size: 1rem; color: #555; }
 .total-price { font-weight: bold; color: #000; font-size: 1.1rem; }
@@ -233,10 +267,10 @@ const confirmOrder = async () => {
 .checkout-btn:disabled { background-color: #ccc; cursor: not-allowed; }
 .empty-cart { text-align: center; padding: 40px 20px; color: #999; font-size: 1rem; }
 
-/* --- CSS ป๊อปอัปทั่วไป (ลบตะกร้า) --- */
+/* Popup ทั่วไป (สำหรับล้างตะกร้า) */
 .confirm-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 50; border-radius: 20px 20px 0 0; }
-.confirm-box { background-color: #fff; width: 85%; max-width: 320px; border-radius: 16px; padding: 24px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-@keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.confirm-box { background-color: #fff; width: 85%; max-width: 320px; border-radius: 16px; padding: 24px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.35s cubic-bezier(.34,1.56,.64,1); }
+@keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .icon-warning { font-size: 3rem; margin-bottom: 12px; }
 .confirm-box h3 { margin: 0 0 10px 0; font-size: 1.2rem; color: #333; }
 .confirm-box p { margin: 0 0 20px 0; font-size: 0.9rem; color: #666; line-height: 1.5; }
@@ -244,83 +278,49 @@ const confirmOrder = async () => {
 .cancel-btn { flex: 1; padding: 12px; background-color: #f3f4f6; color: #4b5563; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 .confirm-btn { flex: 1; padding: 12px; background-color: #e53935; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
-/* 🌟 --- CSS ป๊อปอัปสั่งอาหาร (โทนสว่าง ซอฟต์ หรูหรา) --- 🌟 */
-.blur-bg { backdrop-filter: blur(4px); }
-.light-premium-box {
-  background: linear-gradient(135deg, #fdfbf7 0%, #f4ebd8 100%);
-  border: 2px solid #d4af37;
-  color: #5c4a3d;
-  position: relative;
-  padding: 32px 24px;
-  border-radius: 20px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.2), 0 0 20px rgba(212, 175, 55, 0.2);
+/* Stock Alert Popup */
+.stock-alert-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 10000; }
+.stock-alert-box { background-color: #fff; width: 85%; max-width: 300px; border-radius: 16px; padding: 28px 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.35s cubic-bezier(.34,1.56,.64,1); }
+.alert-icon { font-size: 3.5rem; margin-bottom: 8px; }
+.alert-title { margin: 0 0 12px 0; font-size: 1.4rem; color: #333; font-weight: bold; }
+.alert-desc { margin: 0 0 24px 0; font-size: 1rem; color: #666; line-height: 1.5; }
+.alert-ok-btn { width: 100%; padding: 14px; background-color: #e53935; color: #fff; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+.text-green { color: #2e7d32 !important; font-weight: bold; }
+.bg-green { background-color: #2e7d32 !important; }
+
+.modern-confirm-overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  backdrop-filter:blur(6px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:60;
 }
-.light-inner-border {
-  position: absolute;
-  top: 8px; left: 8px; right: 8px; bottom: 8px;
-  border: 1px solid rgba(212, 175, 55, 0.4);
-  border-radius: 12px;
-  pointer-events: none;
+
+.modern-confirm-box{
+  width:85%;
+  max-width:340px;
+  background:white;
+  border-radius:22px;
+  padding:34px 26px;
+  text-align:center;
+  box-shadow: 0 20px 45px rgba(0,0,0,.25);
+  animation:popupScale .35s cubic-bezier(.34,1.56,.64,1);
 }
-.gold-title-light {
-  color: #8b7355 !important;
-  font-size: 1.35rem !important;
-  margin-bottom: 16px !important;
-  font-weight: 800;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+
+@keyframes popupScale{
+  from{ transform:scale(.8); opacity:0; }
+  to{ transform:scale(1); opacity:1; }
 }
-.chili-icon {
-  font-size: 2.2rem;
-  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
-}
-.premium-desc-light {
-  color: #6e5c4f !important;
-  line-height: 1.6 !important;
-  margin-bottom: 24px !important;
-  font-size: 0.95rem !important;
-  font-weight: 600;
-}
-.text-highlight-light {
-  color: #c62828;
-  font-weight: bold;
-}
-.premium-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  position: relative;
-  z-index: 2;
-}
-.premium-cancel-btn-light {
-  background-color: transparent;
-  color: #8b7355;
-  border: 2px solid #baa37e;
-  padding: 14px;
-  border-radius: 25px;
-  font-weight: bold;
-  font-size: 1.05rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-.premium-cancel-btn-light:active {
-  background-color: rgba(186, 163, 126, 0.15);
-}
-.premium-confirm-btn-light {
-  background: linear-gradient(to right, #ff6b6b, #e53935);
-  color: #fff;
-  border: none;
-  padding: 14px;
-  border-radius: 25px;
-  font-weight: bold;
-  font-size: 1.05rem;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(229, 57, 53, 0.4);
-  transition: transform 0.1s;
-}
-.premium-confirm-btn-light:active {
-  transform: scale(0.96);
-}
+
+.confirm-food-icon{ font-size:3.2rem; margin-bottom:12px; }
+.modern-confirm-title{ font-size:1.4rem; font-weight:800; color:#222; margin-bottom:10px; }
+.modern-confirm-desc{ font-size:.95rem; color:#666; line-height:1.6; }
+.modern-confirm-warning{ margin-top:10px; font-size:.9rem; font-weight:700; color:#e53935; }
+.modern-confirm-actions{ display:flex; gap:12px; margin-top:28px; }
+.modern-cancel-btn{ flex:1; padding:13px; border:none; border-radius:12px; background:#f3f4f6; font-weight:700; cursor:pointer; }
+.modern-confirm-btn{ flex:1; padding:13px; border:none; border-radius:12px; background:linear-gradient(135deg, #ff6b6b, #e53935); color:white; font-weight:800; cursor:pointer; box-shadow: 0 6px 16px rgba(229,57,53,.35); }
+.modern-confirm-btn:active{ transform:scale(.96); }
 </style>

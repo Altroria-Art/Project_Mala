@@ -124,11 +124,29 @@ app.get('/uploads/:filename', async (c) => {
   return new Response(object.body, { headers });
 });
 
+
+// 🌟🌟🌟 แก้ไขระบบออเดอร์ตรงนี้ เพิ่มการเช็คสต๊อกก่อนสั่ง 🌟🌟🌟
 app.post('/api/orders', async (c) => {
   try {
     const body = await c.req.json();
     const { table_id, items, total_price, soup_type, spicy_boiled, spicy_grilled } = body;
 
+    // 1. เช็คสต๊อกในฐานข้อมูลก่อนว่าพอไหม (ป้องกันสต๊อกติดลบ)
+    for (const item of items) {
+      const product = await c.env.project_mala_db.prepare(
+        'SELECT stock, name FROM products WHERE id = ?'
+      ).bind(item.id).first();
+
+      // ถ้าไม่มีสินค้า หรือสต๊อกไม่พอ ให้เด้งกลับทันที ไม่บันทึกออเดอร์
+      if (!product || product.stock < item.quantity) {
+        return c.json({ 
+          success: false, 
+          message: `ขออภัยครับ "${item.name}" สต๊อกไม่พอ (เหลือ ${product ? product.stock : 0} ชิ้น)` 
+        }, 400); 
+      }
+    }
+
+    // 2. ถ้าสต๊อกพอ ค่อยสร้างออเดอร์
     const orderResult = await c.env.project_mala_db.prepare(
       `INSERT INTO orders (table_id, soup_type, spicy_boiled, spicy_grilled, total_price, status) 
        VALUES (?, ?, ?, ?, ?, 'unpaid') RETURNING id`
@@ -142,6 +160,7 @@ app.post('/api/orders', async (c) => {
          VALUES (?, ?, ?, ?, ?)`
       ).bind(order_id, item.name, item.typeAddedAs || 'boiled', item.quantity, item.price * item.quantity).run();
 
+      // ตัดสต๊อก
       await c.env.project_mala_db.prepare(
         `UPDATE products SET stock = stock - ? WHERE id = ?`
       ).bind(item.quantity, item.id).run();
@@ -152,6 +171,8 @@ app.post('/api/orders', async (c) => {
     return c.json({ error: 'Create Order Failed', message: e.message }, 500);
   }
 });
+// 🌟🌟🌟 สิ้นสุดส่วนที่แก้ไข 🌟🌟🌟
+
 
 app.get('/api/orders/queue', async (c) => {
   try {

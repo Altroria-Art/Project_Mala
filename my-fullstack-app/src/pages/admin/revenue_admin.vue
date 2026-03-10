@@ -5,8 +5,9 @@
         <span class="title-icon">📊</span>
         <h1>สรุปรายได้ </h1>
       </div>
-      <div class="date-badge">
-        <span class="icon">📅</span> วันที่: {{ formatDateTh(filterDate) }}
+      
+      <div class="today-badge">
+        <span class="icon">📅</span> วันนี้: {{ formatDateTh(todayDate) }}
       </div>
     </div>
 
@@ -66,16 +67,22 @@
         </div>
 
         <div class="filter-group">
+          <div class="date-filter-box">
+            <span class="icon">📅</span> วันที่:
+            <input type="date" v-model="filterDate" class="date-input" />
+          </div>
+
           <select v-if="viewMode === 'daily'" v-model="selectedTable" @change="resetPage" class="select-input">
             <option value="all">ดูทุกโต๊ะ</option>
             <option v-for="n in 5" :key="n" :value="n">โต๊ะ {{ n }}</option>
           </select>
+
           <select v-if="viewMode === 'items'" v-model="selectedCategory" @change="resetPage" class="select-input">
-  <option value="all">ดูทุกหมวดหมู่</option>
-  <option v-for="cat in categories" :key="cat" :value="cat">
-    {{ cat }}
-  </option>
-</select>
+            <option value="all">ดูทุกหมวดหมู่</option>
+            <option v-for="cat in categories" :key="cat" :value="cat">
+              {{ cat }}
+            </option>
+          </select>
         </div>
       </div>
 
@@ -199,12 +206,19 @@ const summary = ref({ daily_amount: 0, daily_count: 0, monthly_amount: 0, avg_pe
 const history = ref([]);
 const itemsStats = ref([]); 
 const monthlyStats = ref([]); 
-const filterDate = ref(new Date().toISOString().split('T')[0]);
 const selectedTable = ref('all');
 const selectedCategory = ref('all');
 
 const currentPage = ref(1);
 const itemsPerPage = 10;
+
+const getLocalISODate = () => {
+  const tzoffset = (new Date()).getTimezoneOffset() * 60000; 
+  return (new Date(Date.now() - tzoffset)).toISOString().split('T')[0];
+};
+
+const filterDate = ref(getLocalISODate());
+const todayDate = ref(getLocalISODate()); // 🌟 ตัวแปรเก็บวันที่ "วันนี้" แบบคงที่
 
 const fetchData = async () => {
   try {
@@ -308,7 +322,19 @@ onMounted(() => {
 .header-title { display: flex; align-items: center; gap: 12px; }
 .header-title h1 { font-size: 1.75rem; font-weight: 700; color: #0f172a; margin: 0; }
 .title-icon { font-size: 2rem; }
-.date-badge { background: white; padding: 0.6rem 1.2rem; border-radius: 50px; font-weight: 500; color: #475569; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 8px; }
+
+.today-badge { 
+  background: #f0fdf4; 
+  padding: 0.6rem 1.2rem; 
+  border-radius: 50px; 
+  font-weight: 600; 
+  color: #166534; 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+  border: 1px solid #bbf7d0; 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+}
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
 .stat-card { background: white; padding: 1.5rem; border-radius: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; transition: transform 0.2s ease, box-shadow 0.2s ease; }
@@ -333,7 +359,34 @@ onMounted(() => {
 .tab-btn:hover { color: #1e293b; }
 .tab-btn.active { background: white; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
-.filter-group { display: flex; gap: 0.75rem; }
+.filter-group { display: flex; gap: 0.75rem; align-items: center; }
+.date-filter-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #475569;
+  font-weight: 500;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.date-filter-box:focus-within {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+}
+.date-input {
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #3b82f6;
+  background: transparent;
+  cursor: pointer;
+}
+
 .select-input { padding: 0.6rem 1rem; border-radius: 0.75rem; border: 1px solid #cbd5e1; font-size: 0.9rem; outline: none; background: #fff; color: #334155; transition: border-color 0.2s; }
 .select-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
 
@@ -362,7 +415,6 @@ onMounted(() => {
 .rank-badge { background: #cbd5e1; color: white; width: 24px; height: 24px; display: inline-flex; justify-content: center; align-items: center; border-radius: 50%; font-weight: bold; font-size: 0.8rem;}
 
 .empty-state { text-align: center; color: #94a3b8; padding: 3rem !important; }
-
 
 .card-footer { display: flex; justify-content: flex-end; align-items: center; margin-top: 1.5rem; border-top: 1px solid #f1f5f9; padding-top: 1.5rem; }
 .page-nav { display: flex; gap: 0.4rem; }
