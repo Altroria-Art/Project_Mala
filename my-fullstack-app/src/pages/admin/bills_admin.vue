@@ -59,7 +59,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { adminService } from '../../services/adminService'; // เช็ก path ให้ตรงนะ
+import { adminService } from '../../services/adminService'; 
 
 const expandedTableId = ref(null);
 const tables = ref([]);
@@ -68,8 +68,7 @@ const toggleExpand = (id) => {
   expandedTableId.value = expandedTableId.value === id ? null : id;
 };
 
-// ฟังก์ชันดึงและจัดกลุ่มข้อมูลจาก Database
-// ฟังก์ชันดึงและจัดกลุ่มข้อมูลจาก Database
+
 const loadTables = async () => {
   try {
     const rawData = await adminService.getTableBills();
@@ -81,7 +80,6 @@ const loadTables = async () => {
     }
 
     rawData.forEach(order => {
-      // 🌟 เพิ่มบรรทัดนี้: ถ้าสถานะยังเป็น unpaid (รอทำ) ให้ข้ามไปเลย ไม่เอามาโชว์!
       if (order.status === 'unpaid') return; 
 
       const tableId = order.table_id;
@@ -111,10 +109,10 @@ const loadTables = async () => {
 
 onMounted(() => {
   loadTables();
-  setInterval(loadTables, 10000); // รีเฟรชทุก 10 วิ เพื่อความ real-time
+  setInterval(loadTables, 10000); 
 });
 
-// Helper Functions
+
 const getBillTotal = (bill) => bill.items.reduce((sum, i) => sum + (i.qty * i.price), 0);
 const getTableTotal = (table) => table.bills.reduce((sum, b) => sum + getBillTotal(b), 0);
 
@@ -127,21 +125,41 @@ const getStatusText = (status) => {
   return statusMap[status] || status;
 };
 
-// --- ฟังก์ชันสำหรับการชำระเงิน (เดี๋ยวเราค่อยมาเชื่อม API ทีหลัง) ---
-const payBill = (billId) => {
-  console.log(`กดชำระเงินบิล ID: ${billId}`);
-  alert(`เตรียมชำระเงินบิล ID: ${billId} (เดี๋ยวมาต่อ API)`);
+const payBill = async (billId) => {
+  if (!confirm(`ยืนยันการชำระเงินบิล ID: ${billId} ใช่หรือไม่?`)) return;
+
+  try {
+    await adminService.updateOrderStatus(billId, 'paid');
+    alert('ชำระเงินสำเร็จ!');
+    loadTables(); 
+  } catch (error) {
+    console.error("Error paying bill:", error);
+    alert('เกิดข้อผิดพลาดในการชำระเงิน');
+  }
 };
 
-const payTable = (tableId) => {
-  console.log(`กดชำระเงินรวบยอด โต๊ะ: ${tableId}`);
-  alert(`เตรียมชำระเงินทุกบิลของโต๊ะ ${tableId} (เดี๋ยวมาต่อ API)`);
+const payTable = async (tableId) => {
+  const table = tables.value.find(t => t.id === tableId);
+  if (!table || table.bills.length === 0) return;
+
+  const totalAmount = getTableTotal(table);
+  if (!confirm(`ยืนยันการชำระเงินรวบยอดโต๊ะ ${table.no} (รวม ฿${totalAmount.toLocaleString()}) ใช่หรือไม่?`)) return;
+
+  try {
+    const promises = table.bills.map(bill => adminService.updateOrderStatus(bill.id, 'paid'));
+    await Promise.all(promises);
+
+    alert('ชำระเงินรวบยอดสำเร็จ!');
+    expandedTableId.value = null; 
+    loadTables();
+  } catch (error) {
+    console.error("Error paying table:", error);
+    alert('เกิดข้อผิดพลาดในการชำระเงินรวบยอด');
+  }
 };
 </script>
 
 <style scoped>
-/* เอา CSS เดิมของคุณมาแปะตรงนี้ได้เลยครับ! */
-/* ผมขอเพิ่ม CSS เล็กน้อยสำหรับ Status Badge */
 .status-badge {
   font-size: 11px;
   padding: 3px 8px;

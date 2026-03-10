@@ -57,10 +57,15 @@ const loadQueue = async () => {
       if (order.spicy_boiled) notes.push(`[ต้ม] ${order.spicy_boiled}`);
       if (order.spicy_grilled) notes.push(`[ย่าง] ${order.spicy_grilled}`);
 
-      // จัดการวันที่ให้ปลอดภัย
-      const timeString = order.created_at 
-        ? new Date(order.created_at).toLocaleTimeString('th-TH') 
-        : 'ไม่ระบุเวลา';
+      let timeString = 'ไม่ระบุเวลา';
+      if (order.created_at) {
+        const utcString = order.created_at.replace(' ', 'T') + 'Z';
+        timeString = new Date(utcString).toLocaleTimeString('th-TH', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          timeZone: 'Asia/Bangkok'
+        });
+      }
 
       return {
         id: order.id,
