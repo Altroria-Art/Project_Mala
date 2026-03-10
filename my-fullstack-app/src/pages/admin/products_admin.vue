@@ -23,15 +23,14 @@
         </select>
         
         <select v-model="newProduct.category" class="select-field">
-          <option value="Meat">เนื้อสัตว์</option>
-          <option value="vegetable">ผัก</option>
-          <option value="Appetizer">ของกินเล่น</option>
-          <option value="Others">อื่นๆ</option>
-          <option value="Beverage">เครื่องดื่ม</option>
+          <option value="เนื้อสัตว์">เนื้อสัตว์</option>
+          <option value="ผัก">ผัก</option>
+          <option value="ของทานเล่น">ของทานเล่น</option>
+          <option value="เส้น">เส้น</option>
+          <option value="ข้าว">ข้าว</option>
+          <option value="เครื่องดื่ม">เครื่องดื่ม</option>
         </select>
-      </div>
-
-      <div class="preview-section">
+      </div> <div class="preview-section">
         <h3 class="preview-title">ตัวอย่างก่อนบันทึก</h3>
         <div class="preview-card">
           <div class="preview-img-box">
@@ -98,11 +97,12 @@
           </select>
           
           <select v-model="editingProduct.category" class="select-field">
-            <option value="Meat">เนื้อสัตว์</option>
-            <option value="vegetable">ผัก</option>
-            <option value="Appetizer">ของกินเล่น</option>
-            <option value="Others">อื่นๆ</option>
-            <option value="Beverage">เครื่องดื่ม</option>
+            <option value="เนื้อสัตว์">เนื้อสัตว์</option>
+            <option value="ผัก">ผัก</option>
+            <option value="ของทานเล่น">ของทานเล่น</option>
+            <option value="เส้น">เส้น</option>
+            <option value="ข้าว">ข้าว</option>
+            <option value="เครื่องดื่ม">เครื่องดื่ม</option>
           </select>
         </div>
         <div class="modal-actions">
@@ -123,7 +123,7 @@ const newProduct = ref({
   price: null,
   stock: null,
   cooking_type: 'boiled', 
-  category: 'Meat'
+  category: 'เนื้อสัตว์'
 });
 
 const previewImage = ref(null);
@@ -177,7 +177,7 @@ const saveProduct = async () => {
 
     alert('บันทึกเมนูสำเร็จ!');
     
-    newProduct.value = { name: '', price: null, stock: null, cooking_type: 'boiled', category: 'Meat' };
+    newProduct.value = { name: '', price: null, stock: null, cooking_type: 'boiled', category: 'เนื้อสัตว์' };
     previewImage.value = null;
     selectedFile.value = null;
     
