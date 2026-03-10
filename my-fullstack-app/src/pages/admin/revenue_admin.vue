@@ -71,11 +71,11 @@
             <option v-for="n in 5" :key="n" :value="n">โต๊ะ {{ n }}</option>
           </select>
           <select v-if="viewMode === 'items'" v-model="selectedCategory" @change="resetPage" class="select-input">
-            <option value="all">ดูทุกหมวดหมู่</option>
-            <option value="Meat">เนื้อสัตว์</option>
-            <option value="vegetable">ผัก</option>
-            <option value="Appetizer">ของกินเล่น</option>
-          </select>
+  <option value="all">ดูทุกหมวดหมู่</option>
+  <option v-for="cat in categories" :key="cat" :value="cat">
+    {{ cat }}
+  </option>
+</select>
         </div>
       </div>
 
@@ -283,7 +283,24 @@ const formatDateTh = (d) => {
   });
 };
 
-onMounted(fetchData);
+const categories = ref([]);
+
+const fetchCategories = async () => {
+  try {
+    const res = await fetch('http://127.0.0.1:8787/api/categories');
+    const data = await res.json();
+    if (Array.isArray(data)) {
+      categories.value = data;
+    }
+  } catch (e) {
+    console.error("API Fetch Categories Error:", e);
+  }
+};
+
+onMounted(() => {
+  fetchData();
+  fetchCategories();
+});
 </script>
 
 <style scoped>
