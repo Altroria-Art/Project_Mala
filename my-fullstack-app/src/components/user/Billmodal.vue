@@ -27,7 +27,7 @@
             <div v-for="(bill, index) in cartStore.bills" :key="bill.id" class="bill-card">
               
               <div class="bill-header">
-                <h3 class="round-title">รอบที่ {{ index + 1 }}</h3>
+                <h3 class="round-title">บิลที่ {{ index + 1 }}</h3>
                 <span class="bill-time">{{ formatTime(bill.timestamp) }}</span>
               </div>
 
@@ -48,7 +48,7 @@
               </div>
 
               <div class="bill-total">
-                <span>รวมรอบนี้</span>
+                <span>รวมบิลนี้</span>
                 <span class="total-price">{{ bill.totalPrice }}฿</span>
               </div>
 
@@ -59,7 +59,7 @@
         <footer class="modal-footer" v-if="cartStore.bills.length > 0">
           <div class="grand-total-box">
             <div class="grand-total-text">
-              <span class="title">ยอดรวมทั้งหมด ({{ cartStore.orderCount }} รอบ)</span>
+              <span class="title">ยอดรวมทั้งหมด ({{ cartStore.orderCount }} บิล)</span>
               <span class="price">{{ cartStore.grandTotalPrice }}฿</span>
             </div>
             <button class="call-bill-btn" @click="$emit('close')">ปิดหน้าต่าง</button>
@@ -79,17 +79,14 @@ const cartStore = useCartStore();
 
 defineEmits(['close']);
 
-// 🌟 ดึงเบอร์โต๊ะจากเครื่องลูกค้า (ถ้าไม่มีให้ตั้งเป็น 1 ไว้ก่อน)
 const tableNumber = ref(localStorage.getItem('my_table_id') || '1');
 
-// ฟังก์ชันแปลงเวลาให้สวยงาม (เช่น 14:30 น.)
 const formatTime = (dateObj) => {
   if (!dateObj) return '';
   const d = new Date(dateObj);
   return d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' }) + ' น.';
 };
 
-// ฟังก์ชันแปลงข้อความตัวเลือกต้มให้เป็นภาษาไทยอ่านง่าย
 const formatBoilOption = (optionStr) => {
   if (!optionStr) return '';
   let text = optionStr;
@@ -99,7 +96,6 @@ const formatBoilOption = (optionStr) => {
   return text;
 };
 
-// ฟังก์ชันแปลงข้อความตัวเลือกย่าง
 const formatGrillOption = (optionStr) => {
   if (!optionStr) return '';
   return optionStr.replace(/\[(\d+)\]/, 'เผ็ดระดับ $1');
@@ -113,7 +109,6 @@ const formatGrillOption = (optionStr) => {
 
 .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background-color: #fff; border-bottom: 1px solid #f0f0f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); }
 
-/* 🌟 จัดแต่งหัวบิลและป้ายเบอร์โต๊ะ 🌟 */
 .header-center { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .header-title { margin: 0; font-size: 1.1rem; font-weight: bold; color: #333; }
 .table-badge { background-color: #c62828; color: #fff; padding: 2px 12px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; letter-spacing: 0.5px; box-shadow: 0 2px 4px rgba(198, 40, 40, 0.2); }
@@ -124,7 +119,6 @@ const formatGrillOption = (optionStr) => {
 
 .empty-state { text-align: center; padding: 60px 20px; color: #888; font-size: 1rem; }
 
-/* การ์ดบิลแต่ละใบ */
 .bill-card { background-color: #fff; border-radius: 16px; padding: 16px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; }
 .bill-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px dashed #e0e0e0; }
 .round-title { margin: 0; font-size: 1.05rem; font-weight: bold; color: #c62828; }
@@ -143,7 +137,6 @@ const formatGrillOption = (optionStr) => {
 .bill-total { display: flex; justify-content: space-between; align-items: center; font-size: 1rem; color: #333; padding-top: 10px; border-top: 1px dashed #e0e0e0; }
 .total-price { font-size: 1.1rem; font-weight: bold; color: #c62828; }
 
-/* แถบยอดรวมด้านล่างสุด */
 .modal-footer { background-color: #fff; padding: 16px; box-shadow: 0 -4px 12px rgba(0,0,0,0.05); }
 .grand-total-box { display: flex; flex-direction: column; gap: 12px; }
 .grand-total-text { display: flex; justify-content: space-between; align-items: center; }

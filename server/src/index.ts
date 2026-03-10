@@ -138,10 +138,16 @@ app.post('/api/orders', async (c) => {
     const order_id = orderResult.id;
 
     for (const item of items) {
+      // 1. บันทึกข้อมูลลงบิล (order_items)
       await c.env.project_mala_db.prepare(
         `INSERT INTO order_items (order_id, product_name, cooking_type, quantity, subtotal_price) 
          VALUES (?, ?, ?, ?, ?)`
       ).bind(order_id, item.name, item.typeAddedAs || 'boiled', item.quantity, item.price * item.quantity).run();
+
+      // 2. 🌟 ตัดสต๊อกในฐานข้อมูลจริงทันที 🌟
+      await c.env.project_mala_db.prepare(
+        `UPDATE products SET stock = stock - ? WHERE id = ?`
+      ).bind(item.quantity, item.id).run();
     }
 
     return c.json({ success: true, order_id: order_id, message: "สร้างออเดอร์สำเร็จ!" });
@@ -249,7 +255,6 @@ app.get('/api/revenue/summary', async (c) => {
   }
 });
 
-// ลบ Route ซ้ำออก และใช้ query ที่ดึงจากตาราง payments เป็นหลักเพื่อให้ได้วันที่จ่ายเงินจริงๆ
 app.get('/api/revenue/history', async (c) => {
   const date = c.req.query('date') || 'now';
   const queryDate = date === 'now' ? "date('now', '+7 hours')" : "?";
