@@ -3,12 +3,12 @@
     "name": "server",
     "main": "src/index.ts",
     "compatibility_date": "2026-02-14",
-    "account_id": "5e7b495293cc40bfd840b348fc33cd24", 
+    "account_id": "d4f3cb07b220c1c92673769fc5f78930", 
     "d1_databases": [
         {
             "binding": "project_mala_db",
             "database_name": "project-mala-db",
-            "database_id": "b51d9713-460e-492d-922a-58d4340e0ad5"
+            "database_id": "537fb838-5827-4150-9b06-8342ee9481ab"
         }
     ],
     "r2_buckets": [

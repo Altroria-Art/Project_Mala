@@ -1,7 +1,5 @@
-
 DROP TABLE IF EXISTS payments;
 DROP TABLE IF EXISTS order_items;
-
 DROP TABLE IF EXISTS orders;
 DROP TABLE IF EXISTS products;
 
@@ -46,3 +44,14 @@ CREATE TABLE payments (
     paid_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES orders(id) 
 );
+
+CREATE INDEX idx_order_items_order_id ON order_items(order_id);
+
+CREATE INDEX idx_orders_status ON orders(status);
+CREATE INDEX idx_orders_table_status ON orders(table_id, status);
+
+CREATE INDEX idx_products_category ON products(category);
+CREATE UNIQUE INDEX idx_products_name ON products(name);
+
+CREATE INDEX idx_orders_created_at ON orders(created_at);
+CREATE INDEX idx_payments_paid_at ON payments(paid_at);
