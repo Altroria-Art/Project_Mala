@@ -223,6 +223,19 @@ app.patch('/api/orders/:id/status', async (c) => {
     await c.env.project_mala_db.prepare(
       'UPDATE orders SET status = ? WHERE id = ?'
     ).bind(status, id).run()
+
+    if (status === 'paid') {
+      const order = await c.env.project_mala_db.prepare(
+        'SELECT table_id, total_price FROM orders WHERE id = ?'
+      ).bind(id).first()
+
+      if (order) {
+        await c.env.project_mala_db.prepare(
+          'INSERT INTO payments (order_id, table_id, grand_total) VALUES (?, ?, ?)'
+        ).bind(id, order.table_id, order.total_price).run()
+      }
+    }
+
     return c.json({ success: true, message: `Order ${id} updated to ${status}` })
   } catch (e: any) {
     return c.json({ error: 'Update Failed', message: e.message }, 500)
@@ -247,14 +260,13 @@ app.get('/api/revenue/summary', async (c) => {
       daily_amount: today?.total || 0,
       daily_count: countToday?.count || 0,
       monthly_amount: monthly?.total || 0,
-      avg_per_day: (monthly?.total || 0) / 30 // คำนวณคร่าวๆ
+      avg_per_day: (monthly?.total || 0) / 30 
     });
   } catch (e: any) {
     return c.json({ error: e.message }, 500);
   }
 });
 
-// 2. ดึงประวัติบิลรายวัน (Table)
 app.get('/api/revenue/history', async (c) => {
   const date = c.req.query('date') || 'now';
   try {
@@ -263,6 +275,68 @@ app.get('/api/revenue/history', async (c) => {
        FROM orders 
        WHERE status = 'paid' AND date(created_at, 'localtime') = date(?, 'localtime')
        ORDER BY created_at DESC`
+    ).bind(date === 'now' ? 'now' : date).all();
+    
+    return c.json(results);
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+app.get('/api/revenue/history', async (c) => {
+  const date = c.req.query('date') || 'now';
+  try {
+    const { results } = await c.env.project_mala_db.prepare(
+      `SELECT o.id, o.table_id, p.paid_at as created_at, p.grand_total as total_price 
+       FROM orders o
+       JOIN payments p ON o.id = p.order_id
+       WHERE o.status = 'paid' AND date(p.paid_at, 'localtime') = date(?, 'localtime')
+       ORDER BY p.paid_at DESC`
+    ).bind(date === 'now' ? 'now' : date).all();
+    
+    return c.json(results);
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+app.get('/api/revenue/items', async (c) => {
+  const date = c.req.query('date') || 'now';
+  try {
+    const { results } = await c.env.project_mala_db.prepare(
+      `SELECT 
+        oi.product_name as name, 
+        p.category, 
+        SUM(oi.quantity) as quantity, 
+        SUM(oi.subtotal_price) as total
+       FROM order_items oi
+       JOIN orders o ON oi.order_id = o.id
+       LEFT JOIN products p ON oi.product_name = p.name
+       WHERE o.status = 'paid' AND date(o.created_at, 'localtime') = date(?, 'localtime')
+       GROUP BY oi.product_name, p.category
+       ORDER BY quantity DESC`
+    ).bind(date === 'now' ? 'now' : date).all();
+    
+    return c.json(results);
+  } catch (e: any) {
+    return c.json({ error: e.message }, 500);
+  }
+});
+
+app.get('/api/revenue/monthly', async (c) => {
+  const date = c.req.query('date') || 'now';
+  try {
+    const { results } = await c.env.project_mala_db.prepare(
+      `SELECT 
+        date(p.paid_at, 'localtime') as date, 
+        COUNT(o.id) as bill_count, 
+        SUM(p.grand_total) as total_sales
+       FROM orders o
+       JOIN payments p ON o.id = p.order_id
+       WHERE o.status = 'paid' 
+         AND strftime('%Y-%m', p.paid_at, 'localtime') = strftime('%Y-%m', ?, 'localtime')
+       GROUP BY date(p.paid_at, 'localtime')
+       ORDER BY date DESC`
     ).bind(date === 'now' ? 'now' : date).all();
     
     return c.json(results);
