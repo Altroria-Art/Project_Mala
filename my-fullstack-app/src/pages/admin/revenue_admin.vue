@@ -67,11 +67,6 @@
         </div>
 
         <div class="filter-group">
-          <div class="date-filter-box">
-            <span class="icon">📅</span> วันที่:
-            <input type="date" v-model="filterDate" class="date-input" />
-          </div>
-
           <select v-if="viewMode === 'daily'" v-model="selectedTable" @change="resetPage" class="select-input">
             <option value="all">ดูทุกโต๊ะ</option>
             <option v-for="n in 5" :key="n" :value="n">โต๊ะ {{ n }}</option>
@@ -218,7 +213,7 @@ const getLocalISODate = () => {
 };
 
 const filterDate = ref(getLocalISODate());
-const todayDate = ref(getLocalISODate()); // 🌟 ตัวแปรเก็บวันที่ "วันนี้" แบบคงที่
+const todayDate = ref(getLocalISODate()); 
 
 const fetchData = async () => {
   try {
@@ -360,32 +355,6 @@ onMounted(() => {
 .tab-btn.active { background: white; color: #0f172a; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
 .filter-group { display: flex; gap: 0.75rem; align-items: center; }
-.date-filter-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0.5rem 1rem;
-  border-radius: 0.75rem;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #475569;
-  font-weight: 500;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-.date-filter-box:focus-within {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
-}
-.date-input {
-  border: none;
-  outline: none;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #3b82f6;
-  background: transparent;
-  cursor: pointer;
-}
 
 .select-input { padding: 0.6rem 1rem; border-radius: 0.75rem; border: 1px solid #cbd5e1; font-size: 0.9rem; outline: none; background: #fff; color: #334155; transition: border-color 0.2s; }
 .select-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
@@ -401,8 +370,15 @@ onMounted(() => {
 
 .bold { font-weight: 700; }
 .font-medium { font-weight: 500; }
-.text-right { text-align: right; }
-.text-center { text-align: center; }
+
+th.text-right, td.text-right, .text-right { 
+  text-align: right !important; 
+  padding-right: 2.5rem !important; 
+}
+th.text-center, td.text-center, .text-center { 
+  text-align: center !important; 
+}
+
 .text-blue { color: #2563eb; }
 .text-green { color: #059669; }
 .text-purple { color: #7e22ce; }
