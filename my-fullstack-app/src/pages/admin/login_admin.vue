@@ -118,7 +118,6 @@ const handleLogin = () => {
   transform: translateY(-4px);
 }
 
-/* ปรับแต่งกล่องโลโก้ให้รองรับรูปภาพชิบะ */
 .logo-circle {
   width: 85px; 
   height: 85px;
@@ -131,12 +130,10 @@ const handleLogin = () => {
   align-items: center;
   justify-content: center;
 
-  /* ปรับพื้นหลังเป็นสีขาว และใส่กรอบสีส้มให้ดูเป็นมิติ */
   background: #ffffff;
   border: 3px solid #f97316;
   box-shadow: 0 8px 20px rgba(255,140,0,0.3);
-  
-  /* ป้องกันรูปภาพล้นขอบวงกลม */
+
   overflow: hidden;
   transition: transform 0.3s ease;
 }
@@ -145,7 +142,6 @@ const handleLogin = () => {
   transform: scale(1.05) rotate(5deg);
 }
 
-/* ตั้งค่าให้รูปภาพชิบะอยู่ตรงกลางและขนาดพอดี */
 .shiba-logo {
   width: 70%;
   height: 70%;

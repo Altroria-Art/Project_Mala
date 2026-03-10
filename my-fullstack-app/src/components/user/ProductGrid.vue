@@ -21,9 +21,8 @@
             <span class="price">{{ product.price }}฿</span>
           </div>
           
-          <div class="stock-status" :class="{ 'text-red': product.stock <= 0, 'text-green': product.stock > 0 }">
-            <span v-if="product.stock > 0">เหลือ {{ product.stock }} ชิ้น</span>
-            <span v-else>สินค้าหมด</span>
+          <div v-if="product.stock <= 0" class="stock-status text-red">
+            <span>สินค้าหมด</span>
           </div>
           
           <button 
@@ -100,6 +99,7 @@ onMounted(async () => {
 .image-container { background-color: #e0e0e0; height: 120px; display: flex; justify-content: center; align-items: center; padding: 10px; position: relative; }
 .image-container img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
 
+/* ป้ายสินค้าหมด แปะทับรูปภาพ */
 .out-of-stock-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 255, 255, 0.6); display: flex; justify-content: center; align-items: center; font-size: 1.2rem; font-weight: bold; color: #c62828; z-index: 1; }
 
 .product-info { padding: 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; z-index: 2; }
@@ -107,8 +107,7 @@ onMounted(async () => {
 .title { font-size: 0.85rem; color: #333; line-height: 1.2; }
 .price { font-size: 0.9rem; font-weight: bold; color: #000; white-space: nowrap; }
 
-.stock-status { font-size: 0.75rem; font-weight: 600; }
-.text-green { color: #2e7d32; }
+.stock-status { font-size: 0.75rem; font-weight: 600; margin-top: -2px; }
 .text-red { color: #c62828; }
 
 .add-btn { width: 100%; background-color: #fce4e4; color: #333; border: none; padding: 6px; border-radius: 6px; font-size: 0.8rem; font-weight: 500; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 4px; margin-top: auto; transition: background-color 0.2s; }
