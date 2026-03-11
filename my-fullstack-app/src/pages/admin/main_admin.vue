@@ -110,7 +110,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { adminService } from '../../services/adminService'; 
+import { adminService } from '../../services/adminService';
 
 const queueList = ref([]);
 

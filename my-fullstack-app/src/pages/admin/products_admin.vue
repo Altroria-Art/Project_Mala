@@ -137,6 +137,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { client } from '../../client'; // 🌟 เปลี่ยนมาใช้ client แทน API_URL
 
 const newProduct = ref({
   name: '',
@@ -178,7 +179,7 @@ const resetForm = () => {
 
 const fetchProducts = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:8787/api/products');
+    const response = await client.api.products.$get();
     if (!response.ok) throw new Error('Failed to fetch products');
     products.value = await response.json(); 
   } catch (error) {
@@ -200,22 +201,17 @@ const saveProduct = async () => {
   if (!newProduct.value.name) return alert('กรุณาใส่ชื่อเมนู');
   if (!newProduct.value.price) return alert('กรุณาใส่ราคา');
 
-  const formData = new FormData();
-  formData.append('name', newProduct.value.name);
-  formData.append('price', newProduct.value.price);
-  formData.append('stock', newProduct.value.stock || 0);
-  formData.append('cooking_type', newProduct.value.cooking_type);
-  formData.append('category', newProduct.value.category);
-  
-  if (selectedFile.value) {
-    formData.append('image', selectedFile.value); 
-  }
+  const formData = {
+    name: newProduct.value.name,
+    price: String(newProduct.value.price),
+    stock: String(newProduct.value.stock || 0),
+    cooking_type: newProduct.value.cooking_type,
+    category: newProduct.value.category,
+  };
+  if (selectedFile.value) formData.image = selectedFile.value;
 
   try {
-    const response = await fetch('http://127.0.0.1:8787/api/products', {
-      method: 'POST',
-      body: formData 
-    });
+    const response = await client.api.products.$post({ form: formData });
 
     if (!response.ok) throw new Error('Failed to save product');
 
@@ -245,21 +241,19 @@ const onEditFileChange = (e) => {
 const saveEditProduct = async () => {
   if (!editingProduct.value.name) return alert('กรุณาใส่ชื่อเมนู');
 
-  const formData = new FormData();
-  formData.append('name', editingProduct.value.name);
-  formData.append('price', editingProduct.value.price);
-  formData.append('stock', editingProduct.value.stock || 0);
-  formData.append('cooking_type', editingProduct.value.cooking_type);
-  formData.append('category', editingProduct.value.category);
-  
-  if (editSelectedFile.value) {
-    formData.append('image', editSelectedFile.value);
-  }
+  const formData = {
+    name: editingProduct.value.name,
+    price: String(editingProduct.value.price),
+    stock: String(editingProduct.value.stock || 0),
+    cooking_type: editingProduct.value.cooking_type,
+    category: editingProduct.value.category,
+  };
+  if (editSelectedFile.value) formData.image = editSelectedFile.value;
 
   try {
-    const response = await fetch(`http://127.0.0.1:8787/api/products/${editingProduct.value.id}`, {
-      method: 'PATCH',
-      body: formData 
+    const response = await client.api.products[':id'].$patch({
+      param: { id: editingProduct.value.id.toString() },
+      form: formData 
     });
 
     if (!response.ok) throw new Error('Failed to update product');
@@ -278,13 +272,12 @@ const confirmDelete = async (id) => {
   if (!confirm('คุณแน่ใจหรือไม่ว่าจะลบเมนูนี้?')) return;
 
   try {
-    const response = await fetch(`http://127.0.0.1:8787/api/products/${id}`, {
-      method: 'DELETE'
+    const response = await client.api.products[':id'].$delete({
+      param: { id: id.toString() }
     });
 
     if (!response.ok) throw new Error('Failed to delete product');
     
-    // 🌟 ใช้งาน Popup แบบใหม่และโหลดข้อมูลโดยไม่ต้อง Refresh หน้า
     fetchProducts();
     showSuccessModal('ลบเมนูสำเร็จ!');
 

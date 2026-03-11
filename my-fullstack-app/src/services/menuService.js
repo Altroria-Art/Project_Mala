@@ -1,9 +1,12 @@
-const API_URL = 'http://127.0.0.1:8787/api/products'; 
+// 🌟 เปลี่ยนมา import แค่ตัว client (เช็ค path ให้ตรงกับตำแหน่งไฟล์ client.ts ของคุณนะครับ)
+import { client } from '../client'; 
 
 export const menuService = {
   async getMenus() {
     try {
-      const response = await fetch(API_URL);
+      // 🌟 ใช้ client.api.products.$get() แทนการใช้ fetch()
+      const response = await client.api.products.$get();
+      
       if (!response.ok) throw new Error(`Server Error: ${response.status}`);
       
       const data = await response.json();
@@ -11,7 +14,6 @@ export const menuService = {
       const menuItems = Array.isArray(data) ? data : (data.results || []);
 
       return menuItems.map(item => {
-
         let cookType = item.cooking_type ? item.cooking_type.toLowerCase() : 'ready';
         if (cookType === 'boiled') cookType = 'boil';
         if (cookType === 'grilled') cookType = 'grill';
@@ -25,7 +27,7 @@ export const menuService = {
           image: item.image_url,
           category: category, 
           allowedCookTypes: [cookType],
-          stock: item.stock || 0  // 🌟 เพิ่มบรรทัดนี้เพื่อดึงสต๊อกมาใช้
+          stock: item.stock || 0  // 🌟 ดึงสต๊อกมาใช้ตามปกติ
         };
       });
     } catch (error) {

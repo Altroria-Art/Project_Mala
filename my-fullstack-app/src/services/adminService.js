@@ -1,13 +1,12 @@
-const API_URL = 'http://127.0.0.1:8787/api';
+import { client } from '../client';
 
 export const adminService = {
   async getProducts() {
   }, 
 
-
   async getQueue() {
     try {
-      const response = await fetch(`${API_URL}/orders/queue`);
+      const response = await client.api.orders.queue.$get();
       if (!response.ok) throw new Error(`Server Error: ${response.status}`);
       return await response.json();
     } catch (error) {
@@ -18,10 +17,9 @@ export const adminService = {
 
   async updateOrderStatus(orderId, newStatus) {
     try {
-      const response = await fetch(`${API_URL}/orders/${orderId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
+      const response = await client.api.orders[':id'].status.$patch({
+        param: { id: orderId.toString() },
+        json: { status: newStatus }
       });
       return await response.json();
     } catch (error) {
@@ -31,7 +29,7 @@ export const adminService = {
 
   async getTableBills() {
     try {
-      const response = await fetch(`${API_URL}/orders/tables`);
+      const response = await client.api.orders.tables.$get();
       if (!response.ok) throw new Error(`Server Error: ${response.status}`);
       return await response.json();
     } catch (error) {

@@ -195,6 +195,7 @@
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
+import { client } from '../../client'; // 🌟 เปลี่ยนมาใช้ client
 
 const viewMode = ref('daily'); 
 const summary = ref({ daily_amount: 0, daily_count: 0, monthly_amount: 0, avg_per_day: 0 });
@@ -217,18 +218,18 @@ const todayDate = ref(getLocalISODate());
 
 const fetchData = async () => {
   try {
-    const sumRes = await fetch('http://127.0.0.1:8787/api/revenue/summary');
+    const sumRes = await client.api.revenue.summary.$get();
     summary.value = await sumRes.json();
     
-    const histRes = await fetch(`http://127.0.0.1:8787/api/revenue/history?date=${filterDate.value}`);
+    const histRes = await client.api.revenue.history.$get({ query: { date: filterDate.value } });
     const histData = await histRes.json();
     history.value = Array.isArray(histData) ? histData : [];
     
-    const itemsRes = await fetch(`http://127.0.0.1:8787/api/revenue/items?date=${filterDate.value}`);
+    const itemsRes = await client.api.revenue.items.$get({ query: { date: filterDate.value } });
     const itemsData = await itemsRes.json();
     itemsStats.value = Array.isArray(itemsData) ? itemsData : [];
 
-    const monthlyRes = await fetch(`http://127.0.0.1:8787/api/revenue/monthly?date=${filterDate.value}`);
+    const monthlyRes = await client.api.revenue.monthly.$get({ query: { date: filterDate.value } });
     const monthlyData = await monthlyRes.json();
     monthlyStats.value = Array.isArray(monthlyData) ? monthlyData : [];
 
@@ -296,7 +297,7 @@ const categories = ref([]);
 
 const fetchCategories = async () => {
   try {
-    const res = await fetch('http://127.0.0.1:8787/api/categories');
+    const res = await client.api.categories.$get();
     const data = await res.json();
     if (Array.isArray(data)) {
       categories.value = data;
