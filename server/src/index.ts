@@ -11,7 +11,7 @@ const app = new Hono<{ Bindings: Bindings }>()
 
 app.use('/*', cors())
 
-// 🌟 สร้างตัวแปร routes และเริ่มเชื่อมโค้ดแบบลูกโซ่ตรงนี้
+// สร้างตัวแปร routes และเริ่มเชื่อมโค้ดแบบลูกโซ่ตรงนี้
 const routes = app
   .get('/', (c) => {
     return c.text('Server Mala is Running! 🍲')
@@ -124,7 +124,7 @@ const routes = app
     object.writeHttpMetadata(headers as any);
     headers.set('etag', object.httpEtag);
     
-    // 🌟 กลับมาใช้ new Response ได้แล้ว เพราะตั้งค่า tsconfig ผ่านแล้ว
+    // กลับมาใช้ new Response ได้แล้ว เพราะตั้งค่า tsconfig ผ่านแล้ว
     return new Response(object.body as any, { headers });
   })
 
@@ -134,7 +134,7 @@ const routes = app
       const { table_id, items, total_price, soup_type, spicy_boiled, spicy_grilled } = body;
 
       for (const item of items) {
-        // 🌟 เติม Type ให้ .first()
+        // เติม Type ให้ .first()
         const product = await c.env.project_mala_db.prepare(
           'SELECT stock, name FROM products WHERE id = ?'
         ).bind(item.id).first<{ stock: number, name: string }>();
@@ -147,13 +147,13 @@ const routes = app
         }
       }
 
-      // 🌟 เติม Type ให้ .first()
+      // เติม Type ให้ .first()
       const orderResult = await c.env.project_mala_db.prepare(
         `INSERT INTO orders (table_id, soup_type, spicy_boiled, spicy_grilled, total_price, status) 
          VALUES (?, ?, ?, ?, ?, 'unpaid') RETURNING id`
       ).bind(table_id, soup_type || null, spicy_boiled || null, spicy_grilled || null, total_price).first<{ id: number }>();
 
-      // 🌟 เช็ค null ป้องกัน Error
+      // เช็ค null ป้องกัน Error
       if (!orderResult) {
         return c.json({ success: false, message: "สร้างออเดอร์ล้มเหลว" }, 500);
       }
@@ -261,17 +261,17 @@ const routes = app
 
   .get('/api/revenue/summary', async (c) => {
     try {
-      // 🌟 เติม <{ total: number }>
+      // เติม <{ total: number }>
       const today = await c.env.project_mala_db.prepare(
         "SELECT SUM(total_price) as total FROM orders WHERE status = 'paid' AND date(created_at, '+7 hours') = date('now', '+7 hours')"
       ).first<{ total: number }>();
       
-      // 🌟 เติม <{ count: number }>
+      // เติม <{ count: number }>
       const countToday = await c.env.project_mala_db.prepare(
         "SELECT COUNT(*) as count FROM orders WHERE status = 'paid' AND date(created_at, '+7 hours') = date('now', '+7 hours')"
       ).first<{ count: number }>();
 
-      // 🌟 เติม <{ total: number }>
+      // เติม <{ total: number }>
       const monthly = await c.env.project_mala_db.prepare(
         "SELECT SUM(total_price) as total FROM orders WHERE status = 'paid' AND strftime('%m', created_at, '+7 hours') = strftime('%m', 'now', '+7 hours')"
       ).first<{ total: number }>();
@@ -362,7 +362,7 @@ const routes = app
     } catch (e: any) {
       return c.json({ error: e.message }, 500);
     }
-  }); // 🌟 จบการ Chain ตรงนี้ด้วย Semicolon (;)
+  });
 
 export default app;
-export type AppType = typeof routes; // 🌟 Export Type จากตัวแปร routes ให้ฝั่ง Frontend รู้จักทุก Route
+export type AppType = typeof routes;
